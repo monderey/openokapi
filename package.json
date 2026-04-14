@@ -1,0 +1,51 @@
+{
+  "name": "openokapi",
+  "version": "2026.2.7",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "openokapi": "dist/cli/index.cjs"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:pkg": "node ./scripts/build-cli.js",
+    "build:cli": "pnpm run build:pkg && pkg dist/cli/index.cjs --targets node18-win-x64,node18-win-arm64,node18-linux-x64,node18-linux-arm64,node18-macos-x64,node18-macos-arm64 --output dist/bin/openokapi",
+    "install:cli:unix": "bash ./scripts/install.sh",
+    "install:cli:win": "powershell -ExecutionPolicy Bypass -File .\\scripts\\install.ps1",
+    "prettier": "prettier --write ."
+  },
+  "author": "monderey",
+  "license": "MIT",
+  "packageManager": "pnpm@10.28.2",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "chalk": "^4.1.2",
+    "commander": "^14.0.3",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
+    "prettier": "^3.8.1",
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.1.0",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.27.2",
+    "ollama": "^0.6.3",
+    "pkg": "^5.8.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "pkg": {
+    "assets": [
+      "dist/**/*"
+    ]
+  },
+  "engines": {
+    "node": ">=22.22.0"
+  }
+}

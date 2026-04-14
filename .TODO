@@ -1,0 +1,8 @@
+(02.02.2026)
+[ ] Create integration with OpenAI and the ability to select an AI model using an API key or other way to access an account with an API
+[ ] Create a web server and a user interface to it so that AI can be written and managed from a browser (planned port 16273)
+[x] Create integration to ollama with protection against abuse and create cli commands with configuration
+[ ] Create a websocket to retrieve data sent to the API, manage it appropriately, secure it and create CLI commands for configuration
+[ ] Create sessions that allow each person to talk to a separate AI chat
+[ ] Create a basic API to manage everything from the web and CLI levels, appropriately securing it against abuse
+more soon

@@ -1,0 +1,46 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build:pkg",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "build:pkg"],
+      "cwd": "${workspaceFolder}",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "build:cli",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "build:cli"],
+      "cwd": "${workspaceFolder}",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "install:cli:unix",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "install:cli:unix"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "label": "dev",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "build:pkg", "&&", "pnpm", "run", "install:cli:unix"],
+      "cwd": "${workspaceFolder}",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    }
+  ]
+}

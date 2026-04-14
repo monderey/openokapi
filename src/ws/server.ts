@@ -1,11 +1,19 @@
 import express from "express";
 import type { Express } from "express";
-import { WebSocketServer, WebSocket } from "ws";
+import { WebSocketServer, WebSocket, type RawData } from "ws";
 import { Server } from "http";
-import { validateApiKey, validateUserAgent } from "./middleware.js";
+import {
+  getGatewayAuthConfig,
+  getHeaderValue,
+  validateApiKey,
+  validateUserAgent,
+} from "./middleware.js";
 import claudeRouter from "./routes/claude.js";
+import batchRouter from "./routes/batch.js";
+import historyRouter from "./routes/history.js";
 import openaiRouter from "./routes/openai.js";
 import ollamaRouter from "./routes/ollama.js";
+import panelRouter from "./routes/panel-router.js";
 
 export interface ServerConfig {
   port: number;
@@ -37,9 +45,16 @@ export class GatewayServer {
       res.json({ status: "ok", timestamp: new Date().toISOString() });
     });
 
+    this.app.use("/panel", panelRouter);
+    this.app.get("/", (req, res) => {
+      res.redirect("/panel");
+    });
+
     this.app.use("/api/claude", claudeRouter);
     this.app.use("/api/openai", openaiRouter);
     this.app.use("/api/ollama", ollamaRouter);
+    this.app.use("/api/batch", batchRouter);
+    this.app.use("/api/history", historyRouter);
 
     this.app.use((req, res) => {
       res.status(404).json({
@@ -55,23 +70,58 @@ export class GatewayServer {
     this.wss = new WebSocketServer({ server: this.server });
 
     this.wss.on("connection", (ws: WebSocket, req) => {
-      const userAgent = req.headers["user-agent"];
+      const authConfig = getGatewayAuthConfig();
+      const userAgent = getHeaderValue(req.headers["user-agent"]);
+      const apiKey = getHeaderValue(req.headers["x-api-key"]);
 
-      if (userAgent !== "OPENOKAPI/1.0") {
+      if (!authConfig.apiKey) {
         ws.send(
           JSON.stringify({
-            error: "Invalid User-Agent. Required: OPENOKAPI/1.0",
+            error:
+              "API key not configured on server. Use 'openokapi generate api-key' first.",
           }),
         );
-        ws.close();
+        ws.close(1011, "API key not configured");
+        return;
+      }
+
+      if (userAgent !== authConfig.userAgent) {
+        ws.send(
+          JSON.stringify({
+            error: "Invalid User-Agent.",
+          }),
+        );
+        ws.close(1008, "Invalid User-Agent");
+        return;
+      }
+
+      if (apiKey !== authConfig.apiKey) {
+        ws.send(
+          JSON.stringify({
+            error: "Invalid or missing API key",
+          }),
+        );
+        ws.close(1008, "Invalid API key");
         return;
       }
 
       console.log("WebSocket client connected");
 
-      ws.on("message", (message: string) => {
+      ws.on("message", (message: RawData) => {
+        const payload = message.toString();
+
+        if (payload.length > 16_384) {
+          ws.send(
+            JSON.stringify({
+              error: "Message too large",
+            }),
+          );
+          ws.close(1009, "Message too large");
+          return;
+        }
+
         try {
-          const data = JSON.parse(message.toString());
+          const data = JSON.parse(payload);
           console.log("Received:", data);
 
           ws.send(
@@ -80,7 +130,7 @@ export class GatewayServer {
               data,
             }),
           );
-        } catch (error) {
+        } catch {
           ws.send(
             JSON.stringify({
               error: "Invalid JSON",

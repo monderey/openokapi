@@ -122,7 +122,10 @@ export async function runAsk(
   console.log(line(`  ${chalk.dim("Generating response...")}`));
 
   try {
-    const response = await sendOllamaRequest(model, prompt);
+    const response = await sendOllamaRequest(model, prompt, "generate", {
+      source: "cli",
+      action: "ask",
+    });
 
     console.log(line(""));
     console.log(line(`  ${chalk.cyan("Response:")}`));

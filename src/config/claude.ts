@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import {
-  ensureConfigDir,
   getClaudeConfigPath,
   getClaudeModelsPath,
+  writePrivateFile,
 } from "./paths.js";
 
 export type ClaudeModel = {
@@ -37,12 +37,7 @@ export function loadClaudeConfig(): ClaudeConfig {
 }
 
 export function saveClaudeConfig(config: ClaudeConfig): void {
-  ensureConfigDir();
-  fs.writeFileSync(
-    getClaudeConfigPath(),
-    JSON.stringify(config, null, 2),
-    "utf-8",
-  );
+  writePrivateFile(getClaudeConfigPath(), JSON.stringify(config, null, 2));
 }
 
 export function updateClaudeConfig(partial: ClaudeConfig): ClaudeConfig {
@@ -63,10 +58,5 @@ export function loadClaudeModels(): ClaudeModel[] {
 }
 
 export function saveClaudeModels(models: ClaudeModel[]): void {
-  ensureConfigDir();
-  fs.writeFileSync(
-    getClaudeModelsPath(),
-    JSON.stringify(models, null, 2),
-    "utf-8",
-  );
+  writePrivateFile(getClaudeModelsPath(), JSON.stringify(models, null, 2));
 }

@@ -37,9 +37,26 @@ import { runOnboard } from "./commands/onboard.js";
 import { runGenerateApiKey } from "./commands/generate/api-key.js";
 import { runConfigShow } from "./commands/config/show.js";
 import { runSetUserAgent } from "./commands/config/set-user-agent.js";
+import { runSetFallback } from "./commands/config/set-fallback.js";
 import { runGateway } from "./commands/gateway.js";
+import { runHistory } from "./commands/history.js";
+import { runBatch } from "./commands/batch.js";
 
 const args = process.argv.slice(2);
+
+function getFlagValue(commandArgs: string[], flag: string): string | undefined {
+  const flagIndex = commandArgs.indexOf(flag);
+  if (flagIndex === -1 || flagIndex + 1 >= commandArgs.length) {
+    return undefined;
+  }
+
+  const value = commandArgs[flagIndex + 1];
+  if (!value || value.startsWith("--")) {
+    return undefined;
+  }
+
+  return value;
+}
 
 async function handleDiscordCommand(commandArgs: string[]): Promise<void> {
   if (
@@ -52,14 +69,23 @@ async function handleDiscordCommand(commandArgs: string[]): Promise<void> {
   }
 
   if (commandArgs.includes("--settoken")) {
-    const tokenIndex = commandArgs.indexOf("--settoken") + 1;
-    await runSetToken(commandArgs[tokenIndex]);
+    const token = getFlagValue(commandArgs, "--settoken");
+    if (!token) {
+      printHelp();
+      return;
+    }
+
+    await runSetToken(token);
     return;
   }
 
   if (commandArgs.includes("--status")) {
-    const statusIndex = commandArgs.indexOf("--status") + 1;
-    const statusValue = commandArgs[statusIndex];
+    const statusValue = getFlagValue(commandArgs, "--status");
+    if (!statusValue) {
+      printHelp();
+      return;
+    }
+
     const headlessIndex = commandArgs.indexOf("--headless");
     const headless = headlessIndex !== -1 ? "--headless" : undefined;
     await runDiscordStatus(statusValue, headless);
@@ -90,21 +116,41 @@ async function handleOpenAICommand(commandArgs: string[]): Promise<void> {
   }
 
   if (commandArgs.includes("--setkey")) {
-    const keyIndex = commandArgs.indexOf("--setkey") + 1;
-    await runSetApiKey(commandArgs[keyIndex]);
+    const apiKey = getFlagValue(commandArgs, "--setkey");
+    if (!apiKey) {
+      printHelp();
+      return;
+    }
+
+    await runSetApiKey(apiKey);
     return;
   }
 
   if (commandArgs.includes("--ask")) {
     const askIndex = commandArgs.indexOf("--ask") + 1;
+    if (askIndex >= commandArgs.length) {
+      printHelp();
+      return;
+    }
+
     const prompt = commandArgs.slice(askIndex).join(" ");
+    if (!prompt.trim()) {
+      printHelp();
+      return;
+    }
+
     await runAsk(prompt);
     return;
   }
 
   if (commandArgs.includes("--setagent")) {
-    const agentIndex = commandArgs.indexOf("--setagent") + 1;
-    await runSetAgent(commandArgs[agentIndex]);
+    const agent = getFlagValue(commandArgs, "--setagent");
+    if (!agent) {
+      printHelp();
+      return;
+    }
+
+    await runSetAgent(agent);
     return;
   }
 
@@ -137,21 +183,41 @@ async function handleClaudeCommand(commandArgs: string[]): Promise<void> {
   }
 
   if (commandArgs.includes("--setkey")) {
-    const keyIndex = commandArgs.indexOf("--setkey") + 1;
-    await runClaudeSetApiKey(commandArgs[keyIndex]);
+    const apiKey = getFlagValue(commandArgs, "--setkey");
+    if (!apiKey) {
+      printHelp();
+      return;
+    }
+
+    await runClaudeSetApiKey(apiKey);
     return;
   }
 
   if (commandArgs.includes("--ask")) {
     const askIndex = commandArgs.indexOf("--ask") + 1;
+    if (askIndex >= commandArgs.length) {
+      printHelp();
+      return;
+    }
+
     const prompt = commandArgs.slice(askIndex).join(" ");
+    if (!prompt.trim()) {
+      printHelp();
+      return;
+    }
+
     await runClaudeAsk(prompt);
     return;
   }
 
   if (commandArgs.includes("--setagent")) {
-    const agentIndex = commandArgs.indexOf("--setagent") + 1;
-    await runClaudeSetAgent(commandArgs[agentIndex]);
+    const agent = getFlagValue(commandArgs, "--setagent");
+    if (!agent) {
+      printHelp();
+      return;
+    }
+
+    await runClaudeSetAgent(agent);
     return;
   }
 
@@ -184,21 +250,41 @@ async function handleOllamaCommand(commandArgs: string[]): Promise<void> {
   }
 
   if (commandArgs.includes("--seturl")) {
-    const urlIndex = commandArgs.indexOf("--seturl") + 1;
-    await runSetURL(commandArgs[urlIndex]);
+    const url = getFlagValue(commandArgs, "--seturl");
+    if (!url) {
+      printHelp();
+      return;
+    }
+
+    await runSetURL(url);
     return;
   }
 
   if (commandArgs.includes("--ask")) {
     const askIndex = commandArgs.indexOf("--ask") + 1;
+    if (askIndex >= commandArgs.length) {
+      printHelp();
+      return;
+    }
+
     const prompt = commandArgs.slice(askIndex).join(" ");
+    if (!prompt.trim()) {
+      printHelp();
+      return;
+    }
+
     await runOllamaAsk(prompt);
     return;
   }
 
   if (commandArgs.includes("--setagent")) {
-    const agentIndex = commandArgs.indexOf("--setagent") + 1;
-    await runOllamaSetAgent(commandArgs[agentIndex]);
+    const agent = getFlagValue(commandArgs, "--setagent");
+    if (!agent) {
+      printHelp();
+      return;
+    }
+
+    await runOllamaSetAgent(agent);
     return;
   }
 
@@ -209,26 +295,51 @@ async function handleOllamaCommand(commandArgs: string[]): Promise<void> {
 
   if (commandArgs.includes("--search")) {
     const searchIndex = commandArgs.indexOf("--search") + 1;
+    if (searchIndex >= commandArgs.length) {
+      printHelp();
+      return;
+    }
+
     const searchTerm = commandArgs.slice(searchIndex).join(" ");
+    if (!searchTerm.trim()) {
+      printHelp();
+      return;
+    }
+
     await runSearchModel(searchTerm);
     return;
   }
 
   if (commandArgs.includes("--pull")) {
-    const pullIndex = commandArgs.indexOf("--pull") + 1;
-    await runPullModel(commandArgs[pullIndex]);
+    const model = getFlagValue(commandArgs, "--pull");
+    if (!model) {
+      printHelp();
+      return;
+    }
+
+    await runPullModel(model);
     return;
   }
 
   if (commandArgs.includes("--info")) {
-    const infoIndex = commandArgs.indexOf("--info") + 1;
-    await runModelInfo(commandArgs[infoIndex]);
+    const model = getFlagValue(commandArgs, "--info");
+    if (!model) {
+      printHelp();
+      return;
+    }
+
+    await runModelInfo(model);
     return;
   }
 
   if (commandArgs.includes("--delete")) {
-    const deleteIndex = commandArgs.indexOf("--delete") + 1;
-    await runDeleteModel(commandArgs[deleteIndex]);
+    const model = getFlagValue(commandArgs, "--delete");
+    if (!model) {
+      printHelp();
+      return;
+    }
+
+    await runDeleteModel(model);
     return;
   }
 
@@ -266,18 +377,49 @@ async function handleConfigCommand(commandArgs: string[]): Promise<void> {
   }
 
   if (commandArgs.includes("--show")) {
-    const showIndex = commandArgs.indexOf("--show") + 1;
-    await runConfigShow(commandArgs[showIndex]);
+    const showValue = getFlagValue(commandArgs, "--show");
+    if (!showValue) {
+      printHelp();
+      return;
+    }
+
+    await runConfigShow(showValue);
     return;
   }
 
   if (commandArgs.includes("--set-user-agent")) {
-    const uaIndex = commandArgs.indexOf("--set-user-agent") + 1;
-    await runSetUserAgent(commandArgs[uaIndex]);
+    const userAgent = getFlagValue(commandArgs, "--set-user-agent");
+    if (!userAgent) {
+      printHelp();
+      return;
+    }
+
+    await runSetUserAgent(userAgent);
+    return;
+  }
+
+  if (commandArgs.includes("--set-fallback")) {
+    const fallbackProvider = getFlagValue(commandArgs, "--set-fallback");
+    if (!fallbackProvider) {
+      printHelp();
+      return;
+    }
+
+    await runSetFallback(fallbackProvider);
     return;
   }
 
   printHelp();
+}
+
+async function handleHistoryCommand(commandArgs: string[]): Promise<void> {
+  runHistory(commandArgs);
+}
+
+async function handleBatchCommand(commandArgs: string[]): Promise<void> {
+  const filePath = getFlagValue(commandArgs, "--file");
+  const concurrency = getFlagValue(commandArgs, "--concurrency");
+  await runBatch(filePath, concurrency);
 }
 
 async function main(): Promise<void> {
@@ -312,9 +454,18 @@ async function main(): Promise<void> {
   }
 
   if (args[0] === "gateway") {
-    const portIndex = args.indexOf("--port");
-    const port = portIndex !== -1 ? args[portIndex + 1] : undefined;
+    const port = getFlagValue(args, "--port");
     await runGateway(port);
+    return;
+  }
+
+  if (args[0] === "history") {
+    await handleHistoryCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "batch") {
+    await handleBatchCommand(args.slice(1));
     return;
   }
 

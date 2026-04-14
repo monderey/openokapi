@@ -4,7 +4,7 @@
   <strong>Zjednoczony interfejs API dla wielu dostawców AI | OpenAI • Claude • Integracja Discord</strong>
   <br><br>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></a>
-  <a href="https://discord.gg/yAVQXusPJd"><img src="https://img.shields.io/discord/1467172467507335403?label=Discord&logo=discord&logoColor=white&color=5865F2&style=for-the-badge" alt="Discord"></a>
+  <a href="https://discord.gg/RF8CgZbx2P"><img src="https://img.shields.io/discord/1492979180084920331?label=Discord&logo=discord&logoColor=white&color=5865F2&style=for-the-badge" alt="Discord"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
 </p>
 
@@ -57,6 +57,7 @@ OpenOKAPI zawiera wbudowany serwer HTTP/WebSocket API, który zapewnia zdalny do
 - 🔒 **Bezpieczne Uwierzytelnianie** - Walidacja klucza API i weryfikacja User-Agent
 - 🚀 **RESTful API** - Lustrzane odbicie wszystkich komend CLI jako endpointy HTTP
 - 🔌 **Wsparcie WebSocket** - Komunikacja dwukierunkowa w czasie rzeczywistym
+- 📚 **Historia Żądań** - Lokalny dziennik audytu z historią aktywności i statystykami
 - ⚙️ **Konfigurowalne** - Własny port przez zmienną środowiskową (domyślnie: 16273)
 
 ### Szybki Start:
@@ -70,7 +71,18 @@ openokapi gateway
 
 # Lub określ niestandardowy port
 openokapi gateway --port 8080
+
+# Wyświetl lokalną historię żądań
+openokapi history --stats --limit 10
+
+# Opcjonalnie: ustaw fallback providera dla failovera
+openokapi config --set-fallback claude
+
+# Uruchom żądania wsadowe z pliku JSON
+openokapi batch --file ./requests.json --concurrency 4
 ```
+
+Otwórz wbudowany panel na `http://localhost:16273/panel` po uruchomieniu gateway.
 
 ### Dostępne Endpointy:
 
@@ -78,11 +90,13 @@ openokapi gateway --port 8080
 
 - `GET /api/claude/status` - Pobierz status konfiguracji
 - `POST /api/claude/ask` - Wyślij prompt (body: `{prompt, model?}`)
+- `POST /api/claude/stream` - Przesyłaj odpowiedź jako SSE (body: `{prompt, model?}`)
 
 **OpenAI:**
 
 - `GET /api/openai/status` - Pobierz status konfiguracji
 - `POST /api/openai/ask` - Wyślij prompt (body: `{prompt, model?}`)
+- `POST /api/openai/stream` - Przesyłaj odpowiedź jako SSE (body: `{prompt, model?}`)
 
 **Ollama:**
 
@@ -91,8 +105,20 @@ openokapi gateway --port 8080
 - `GET /api/ollama/search?query=...` - Wyszukaj modele
 - `GET /api/ollama/info?model=...` - Informacje o modelu
 - `POST /api/ollama/ask` - Wyślij prompt (body: `{prompt, model?}`)
+- `POST /api/ollama/stream` - Przesyłaj odpowiedź jako SSE (body: `{prompt, model?}`)
 - `POST /api/ollama/pull` - Pobierz model (body: `{model}`)
 - `DELETE /api/ollama/delete` - Usuń model (body: `{model}`)
+
+**Batch + Panel:**
+
+- `POST /api/batch` - Przetwarzaj wiele żądań z kontrolą równoczesności (body: `{requests, concurrency?}`)
+- `GET /panel` - Panel przeglądarki z logowaniem klucza API, czatem, trybem streamingu, runnerem wsadowym i widokiem historii
+
+**Historia:**
+
+- `GET /api/history/summary` - Pobierz zagregowane statystyki żądań
+- `GET /api/history/recent?limit=...` - Pobierz ostatnie żądania, opcjonalnie filtrując po `provider`, `source` lub `action`
+- `DELETE /api/history` - Wyczyść lokalną historię żądań
 
 ### Przykładowe Żądanie:
 
@@ -138,7 +164,7 @@ Każdy wkład jest doceniany – kod, testy, dokumentacja, pomysły!
 
 Dołącz do naszej społeczności Discord i pomagaj budować OpenOKAPI:
 
-💬 **Discord:** https://discord.gg/yAVQXusPJd
+💬 **Discord:** https://discord.gg/RF8CgZbx2P
 
 Nie wahaj się skontaktować, zadawać pytania lub proponować nowe pomysły!
 
@@ -146,14 +172,14 @@ Nie wahaj się skontaktować, zadawać pytania lub proponować nowe pomysły!
 
 ## ⭐ Historia gwiazdek
 
-[![Star History Chart](https://api.star-history.com/svg?repos=ColiberAI/openokapi&type=Date)](https://star-history.com/#ColiberAI/openokapi&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=monderey/openokapi&type=Date)](https://star-history.com/#monderey/openokapi&Date)
 
 ## ❤️ Współpracownicy
 
 Dziękujemy każdemu, kto pomaga uczynić ten projekt lepszym!
 
-<a href="https://github.com/ColiberAI/openokapi/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ColiberAI/openokapi" />
+<a href="https://github.com/monderey/openokapi/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=monderey/openokapi" />
 </a>
 
 ---

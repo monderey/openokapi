@@ -88,6 +88,16 @@ export function printHelp(): void {
   console.log(line(`  Config: ${chalk.cyan("openokapi onboard")}`));
   console.log(line(`  Version: ${chalk.cyan("openokapi version")}`));
   console.log(line(`  Websocket: ${chalk.cyan("openokapi gateway [--port]")}`));
+  console.log(
+    line(
+      `  Batch: ${chalk.cyan("openokapi batch --file ./requests.json [--concurrency N]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  History: ${chalk.cyan("openokapi history [--show|--stats|--clear]")}`,
+    ),
+  );
   console.log(line(""));
   console.log(`${chalk.dim("├" + "─".repeat(width - 2) + "┘")}`);
   console.log(chalk.dim("│"));
@@ -108,6 +118,12 @@ export function printHelp(): void {
       `  Set User Agent: ${chalk.cyan("openokapi config --set-user-agent")}`,
     ),
   );
+  console.log(
+    line(
+      `  Set Fallback: ${chalk.cyan("openokapi config --set-fallback <provider|off>")}`,
+    ),
+  );
+  console.log(line(`  History: ${chalk.cyan("openokapi history")}`));
   console.log(line(""));
   console.log(`${chalk.dim("├" + "─".repeat(width - 2) + "┘")}`);
   console.log(chalk.dim("│"));

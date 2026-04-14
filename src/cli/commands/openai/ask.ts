@@ -178,6 +178,10 @@ export async function runAsk(
       model,
       prompt,
       temperature: 0.7,
+      history: {
+        source: "cli",
+        action: "ask",
+      },
     });
 
     if (!result.success || !result.content) {

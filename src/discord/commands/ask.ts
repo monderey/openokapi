@@ -16,7 +16,7 @@ import { getClaudeClient } from "../../claude/client.js";
 import { OllamaClient } from "../../ollama/client.js";
 
 function getCleanModelName(modelName: string): string {
-  const colonIndex = modelName.indexOf(':');
+  const colonIndex = modelName.indexOf(":");
   return colonIndex !== -1 ? modelName.substring(0, colonIndex) : modelName;
 }
 
@@ -120,20 +120,34 @@ export const command: SlashCommand = {
         return;
       }
     } else {
-      useProvider = openaiAvailable ? "openai" : claudeAvailable ? "claude" : "ollama";
+      useProvider = openaiAvailable
+        ? "openai"
+        : claudeAvailable
+          ? "claude"
+          : "ollama";
     }
 
-    const config = useProvider === "openai" ? openaiConfig : useProvider === "claude" ? claudeConfig : ollamaConfig;
+    const config =
+      useProvider === "openai"
+        ? openaiConfig
+        : useProvider === "claude"
+          ? claudeConfig
+          : ollamaConfig;
 
     const model = modelOverride || config.defaultModel;
     if (!model) {
-      const providerName = useProvider === "openai" ? "OpenAI" : useProvider === "claude" ? "Claude" : "Ollama";
+      const providerName =
+        useProvider === "openai"
+          ? "OpenAI"
+          : useProvider === "claude"
+            ? "Claude"
+            : "Ollama";
       const command =
         useProvider === "openai"
           ? "openokapi agent openai --setagent <model>"
           : useProvider === "claude"
-          ? "openokapi agent claude --setagent <model>"
-          : "openokapi agent ollama --setagent <model>";
+            ? "openokapi agent claude --setagent <model>"
+            : "openokapi agent ollama --setagent <model>";
       await interaction.reply({
         content: `> No default model configured for ${providerName}. Set one with \`${command}\``,
         ephemeral: true,
@@ -193,6 +207,10 @@ export const command: SlashCommand = {
           model,
           prompt,
           temperature,
+          history: {
+            source: "discord",
+            action: "stream",
+          },
         });
 
         if (!streamResult.success || !streamResult.stream) {
@@ -228,6 +246,10 @@ export const command: SlashCommand = {
           prompt,
           temperature,
           maxTokens: 1024,
+          history: {
+            source: "discord",
+            action: "ask",
+          },
         });
 
         if (!claudeResult.success || !claudeResult.content) {
@@ -257,7 +279,10 @@ export const command: SlashCommand = {
         fullResponse = claudeResult.content;
       } else if (useProvider === "ollama") {
         try {
-          fullResponse = await sendOllamaRequest(model, prompt, "chat");
+          fullResponse = await sendOllamaRequest(model, prompt, "chat", {
+            source: "discord",
+            action: "chat",
+          });
         } catch (error: any) {
           const errorMsg = `> **Error:** ${error.message || "Failed to get response from Ollama"}`;
 
@@ -320,9 +345,24 @@ export const command: SlashCommand = {
       }
 
       for (let i = 0; i < responses.length; i++) {
-        const providerIcon = useProvider === "openai" ? "🤖" : useProvider === "claude" ? "🧠" : "🦙";
-        const providerColor = useProvider === "openai" ? 0x10a37f : useProvider === "claude" ? 0xd97757 : 0x000000;
-        const providerName = useProvider === "openai" ? "OpenAI" : useProvider === "claude" ? "Claude" : "Ollama";
+        const providerIcon =
+          useProvider === "openai"
+            ? "🤖"
+            : useProvider === "claude"
+              ? "🧠"
+              : "🦙";
+        const providerColor =
+          useProvider === "openai"
+            ? 0x10a37f
+            : useProvider === "claude"
+              ? 0xd97757
+              : 0x000000;
+        const providerName =
+          useProvider === "openai"
+            ? "OpenAI"
+            : useProvider === "claude"
+              ? "Claude"
+              : "Ollama";
         const cleanModelName = getCleanModelName(model);
 
         const embed = {

@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import {
-  ensureConfigDir,
   getOpenAIConfigPath,
   getOpenAIModelsPath,
+  writePrivateFile,
 } from "./paths.js";
 
 export type OpenAIModel = {
@@ -38,12 +38,7 @@ export function loadOpenAIConfig(): OpenAIConfig {
 }
 
 export function saveOpenAIConfig(config: OpenAIConfig): void {
-  ensureConfigDir();
-  fs.writeFileSync(
-    getOpenAIConfigPath(),
-    JSON.stringify(config, null, 2),
-    "utf-8",
-  );
+  writePrivateFile(getOpenAIConfigPath(), JSON.stringify(config, null, 2));
 }
 
 export function updateOpenAIConfig(partial: OpenAIConfig): OpenAIConfig {
@@ -64,10 +59,5 @@ export function loadOpenAIModels(): OpenAIModel[] {
 }
 
 export function saveOpenAIModels(models: OpenAIModel[]): void {
-  ensureConfigDir();
-  fs.writeFileSync(
-    getOpenAIModelsPath(),
-    JSON.stringify(models, null, 2),
-    "utf-8",
-  );
+  writePrivateFile(getOpenAIModelsPath(), JSON.stringify(models, null, 2));
 }

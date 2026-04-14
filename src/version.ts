@@ -8,7 +8,7 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 async function getVersionFromGitHub(): Promise<string | null> {
   try {
     const response = await axios.get<{ tag_name?: string }>(
-      "https://api.github.com/repos/ColiberAI/openokapi/releases/latest",
+      "https://api.github.com/repos/monderey/openokapi/releases/latest",
     );
     return response.data.tag_name
       ? response.data.tag_name.replace("v", "")

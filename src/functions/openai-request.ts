@@ -1,5 +1,10 @@
 import { getOpenAIClient } from "../openai/client.js";
 import type { ChatCompletionRequest } from "../openai/resources/types.js";
+import {
+  recordRequestHistory,
+  type RequestHistoryAction,
+  type RequestHistorySource,
+} from "../utils/request-history.js";
 
 export interface OpenAIRequestOptions {
   model: string;
@@ -7,6 +12,10 @@ export interface OpenAIRequestOptions {
   temperature?: number;
   maxTokens?: number;
   stream?: boolean;
+  history?: {
+    source?: RequestHistorySource;
+    action?: RequestHistoryAction;
+  };
 }
 
 export interface OpenAIRequestResult {
@@ -38,8 +47,13 @@ export async function sendOpenAIRequest(
   const client = getOpenAIClient();
   const maxRetries = 3;
   let lastError: any = null;
+  const startedAt = Date.now();
+  let attempts = 0;
+  const historySource = options.history?.source || "unknown";
+  const historyAction = options.history?.action || "ask";
 
   for (let retries = 0; retries < maxRetries; retries++) {
+    attempts += 1;
     try {
       const request: ChatCompletionRequest = {
         model: options.model,
@@ -53,6 +67,18 @@ export async function sendOpenAIRequest(
 
       const response = await client.createChatCompletion(request);
       const content = response.choices[0]?.message?.content || "";
+
+      recordRequestHistory({
+        provider: "openai",
+        source: historySource,
+        action: historyAction,
+        model: options.model,
+        success: true,
+        durationMs: Date.now() - startedAt,
+        promptLength: options.prompt.length,
+        responseLength: content.length,
+        retries: attempts - 1,
+      });
 
       return {
         success: true,
@@ -71,12 +97,31 @@ export async function sendOpenAIRequest(
     }
   }
 
-  return parseOpenAIError(lastError);
+  const parsed = parseOpenAIError(lastError);
+
+  recordRequestHistory({
+    provider: "openai",
+    source: historySource,
+    action: historyAction,
+    model: options.model,
+    success: false,
+    durationMs: Date.now() - startedAt,
+    promptLength: options.prompt.length,
+    retries: attempts - 1,
+    errorType: parsed.error?.type,
+    errorMessage: parsed.error?.message,
+  });
+
+  return parsed;
 }
 
 export async function streamOpenAIRequest(
   options: OpenAIRequestOptions,
 ): Promise<OpenAIStreamResult> {
+  const startedAt = Date.now();
+  const historySource = options.history?.source || "unknown";
+  const historyAction = options.history?.action || "stream";
+
   try {
     const client = getOpenAIClient();
 
@@ -97,19 +142,68 @@ export async function streamOpenAIRequest(
 
     const stream = client.streamMessage(requestParams);
 
+    const monitoredStream = (async function* () {
+      let responseLength = 0;
+
+      try {
+        for await (const chunk of stream) {
+          responseLength += chunk.length;
+          yield chunk;
+        }
+
+        recordRequestHistory({
+          provider: "openai",
+          source: historySource,
+          action: historyAction,
+          model: options.model,
+          success: true,
+          durationMs: Date.now() - startedAt,
+          promptLength: options.prompt.length,
+          responseLength,
+        });
+      } catch (error) {
+        const parsed = parseOpenAIError(error);
+        recordRequestHistory({
+          provider: "openai",
+          source: historySource,
+          action: historyAction,
+          model: options.model,
+          success: false,
+          durationMs: Date.now() - startedAt,
+          promptLength: options.prompt.length,
+          errorType: parsed.error?.type,
+          errorMessage: parsed.error?.message,
+        });
+        throw error;
+      }
+    })();
+
     return {
       success: true,
-      stream,
+      stream: monitoredStream,
     };
   } catch (error: any) {
+    const parsed = parseOpenAIError(error);
+    recordRequestHistory({
+      provider: "openai",
+      source: historySource,
+      action: historyAction,
+      model: options.model,
+      success: false,
+      durationMs: Date.now() - startedAt,
+      promptLength: options.prompt.length,
+      errorType: parsed.error?.type,
+      errorMessage: parsed.error?.message,
+    });
+
     return {
       success: false,
-      error: parseOpenAIError(error).error,
+      error: parsed.error,
     };
   }
 }
 
-function parseOpenAIError(error: any): OpenAIRequestResult {
+export function parseOpenAIError(error: any): OpenAIRequestResult {
   const status = error.response?.status;
   const message =
     error.response?.data?.error?.message || error.message || "Unknown error";

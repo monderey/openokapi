@@ -36,6 +36,7 @@ Planned and currently developed features include:
 - 🔌 Integration with multiple AI platforms
 - 🧩 Modular architecture for easy extension
 - 💻 CLI interface for management and interaction
+- 📈 Request history and usage stats
 - 🌐 Web dashboard for configuration
 - 🤖 Integrations with communication platforms:
   - Discord
@@ -57,6 +58,7 @@ OpenOKAPI includes a built-in HTTP/WebSocket API server that provides remote acc
 - 🔒 **Secure Authentication** - API key validation and User-Agent verification
 - 🚀 **RESTful API** - Mirror of all CLI commands as HTTP endpoints
 - 🔌 **WebSocket Support** - Real-time bidirectional communication
+- 📚 **Request History** - Local audit trail with recent activity and summary stats
 - ⚙️ **Configurable** - Custom port via environment variable (default: 16273)
 
 ### Quick Start:
@@ -70,7 +72,18 @@ openokapi gateway
 
 # Or specify custom port
 openokapi gateway --port 8080
+
+# Show local request history
+openokapi history --stats --limit 10
+
+# Optional: set fallback provider for failover
+openokapi config --set-fallback claude
+
+# Run batch requests from JSON file
+openokapi batch --file ./requests.json --concurrency 4
 ```
+
+Open the built-in panel at `http://localhost:16273/panel` after starting gateway.
 
 ### Available Endpoints:
 
@@ -78,11 +91,13 @@ openokapi gateway --port 8080
 
 - `GET /api/claude/status` - Get configuration status
 - `POST /api/claude/ask` - Send prompt (body: `{prompt, model?}`)
+- `POST /api/claude/stream` - Stream response as SSE (body: `{prompt, model?}`)
 
 **OpenAI:**
 
 - `GET /api/openai/status` - Get configuration status
 - `POST /api/openai/ask` - Send prompt (body: `{prompt, model?}`)
+- `POST /api/openai/stream` - Stream response as SSE (body: `{prompt, model?}`)
 
 **Ollama:**
 
@@ -91,8 +106,20 @@ openokapi gateway --port 8080
 - `GET /api/ollama/search?query=...` - Search models
 - `GET /api/ollama/info?model=...` - Get model info
 - `POST /api/ollama/ask` - Send prompt (body: `{prompt, model?}`)
+- `POST /api/ollama/stream` - Stream response as SSE (body: `{prompt, model?}`)
 - `POST /api/ollama/pull` - Pull model (body: `{model}`)
 - `DELETE /api/ollama/delete` - Delete model (body: `{model}`)
+
+**Batch + Panel:**
+
+- `POST /api/batch` - Process many requests with concurrency control (body: `{requests, concurrency?}`)
+- `GET /panel` - Browser panel with API key login, chat, stream mode, batch runner, and history view
+
+**History:**
+
+- `GET /api/history/summary` - Get aggregated request stats
+- `GET /api/history/recent?limit=...` - Get recent requests, optionally filtered by `provider`, `source`, or `action`
+- `DELETE /api/history` - Clear local request history
 
 ### Example Request:
 

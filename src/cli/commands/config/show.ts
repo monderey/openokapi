@@ -16,7 +16,7 @@ export function runConfigShow(target?: string): void {
     console.log(line(""));
     printWrappedMessage(`Error: ${chalk.red("No value after --show")}`);
     printWrappedMessage(
-      `Usage: ${chalk.cyan("openokapi config --show api-key")}`,
+      `Usage: ${chalk.cyan("openokapi config --show api-key|fallback-provider")}`,
     );
     console.log(line(""));
     console.log(`${chalk.dim("└" + "─".repeat(width - 2) + "┘")}`);
@@ -24,7 +24,7 @@ export function runConfigShow(target?: string): void {
     return;
   }
 
-  if (target !== "api-key") {
+  if (target !== "api-key" && target !== "fallback-provider") {
     console.log();
     console.log(chalk.dim("┌  ") + chalk.bold.green("OpenOKAPI Config Show"));
     console.log(chalk.dim("│"));
@@ -35,7 +35,7 @@ export function runConfigShow(target?: string): void {
     );
     console.log(line(""));
     printWrappedMessage(`Error: ${chalk.red("Unknown config key")}`);
-    printWrappedMessage(`Allowed: ${chalk.cyan("api-key")}`);
+    printWrappedMessage(`Allowed: ${chalk.cyan("api-key, fallback-provider")}`);
     console.log(line(""));
     console.log(`${chalk.dim("└" + "─".repeat(width - 2) + "┘")}`);
     console.log();
@@ -53,6 +53,16 @@ export function runConfigShow(target?: string): void {
       chalk.dim(" ───────────────────────────────────────────────────┐"),
   );
   console.log(line(""));
+
+  if (target === "fallback-provider") {
+    console.log(
+      line(`  Fallback: ${chalk.cyan(config.fallbackProvider || "disabled")}`),
+    );
+    console.log(line(""));
+    console.log(`${chalk.dim("└" + "─".repeat(width - 2) + "┘")}`);
+    console.log();
+    return;
+  }
 
   if (!config.apiKey) {
     printWrappedMessage(

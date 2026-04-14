@@ -44,6 +44,50 @@ openokapi config --show api-key
 
 Displays the stored API key from the local config.
 
+### Set fallback provider
+
+```
+openokapi config --set-fallback <openai|claude|ollama|off>
+```
+
+Sets the provider used as fallback when primary provider fails due to timeout/network/rate-limit errors.
+
+### Run batch requests
+
+```
+openokapi batch --file <PATH> [--concurrency <N>]
+```
+
+Executes many provider prompts through gateway `/api/batch` endpoint.
+
+Batch file format:
+
+```json
+[
+  { "provider": "openai", "prompt": "hello", "model": "gpt-4o-mini" },
+  { "provider": "claude", "prompt": "summarize this" },
+  { "provider": "ollama", "prompt": "explain", "model": "llama3" }
+]
+```
+
+### Request history
+
+```
+openokapi history
+```
+
+Shows recent provider requests with a compact stats summary.
+
+Useful flags:
+
+- `--show` - Show the default summary and recent entries
+- `--stats` - Force the aggregated stats block
+- `--limit <N>` - Limit recent entries shown (max 100)
+- `--provider <openai|claude|ollama>` - Filter by provider
+- `--source <cli|gateway|discord>` - Filter by source
+- `--action <ask|chat|generate|stream>` - Filter by action
+- `--clear` - Clear the local request history
+
 ## CLI — Gateway API Server
 
 ### Start Gateway
@@ -69,17 +113,29 @@ Starts the Gateway API server on a specific port.
   - Header: `User-Agent: OPENOKAPI/1.0`
   - Header: `X-API-Key: <your-generated-key>`
 
+**History:**
+
+- `GET /api/history/summary` - Get aggregated request stats
+- `GET /api/history/recent?limit=<N>` - Get recent request entries
+- `DELETE /api/history` - Clear local request history
+
+**Panel:**
+
+- `GET /panel` - Open web panel with API-key login, chat, streaming mode, batch runner, and history controls
+
 **Available Endpoints:**
 
 **Claude:**
 
 - `GET /api/claude/status` - Get Claude configuration status
 - `POST /api/claude/ask` - Send prompt to Claude (body: `{prompt, model?}`)
+- `POST /api/claude/stream` - Stream Claude response via SSE (body: `{prompt, model?}`)
 
 **OpenAI:**
 
 - `GET /api/openai/status` - Get OpenAI configuration status
 - `POST /api/openai/ask` - Send prompt to OpenAI (body: `{prompt, model?}`)
+- `POST /api/openai/stream` - Stream OpenAI response via SSE (body: `{prompt, model?}`)
 
 **Ollama:**
 
@@ -88,8 +144,13 @@ Starts the Gateway API server on a specific port.
 - `GET /api/ollama/search?query=<term>` - Search for models
 - `GET /api/ollama/info?model=<name>` - Get model information
 - `POST /api/ollama/ask` - Send prompt to Ollama (body: `{prompt, model?}`)
+- `POST /api/ollama/stream` - Stream Ollama response via SSE (body: `{prompt, model?}`)
 - `POST /api/ollama/pull` - Download a model (body: `{model}`)
 - `DELETE /api/ollama/delete` - Delete a model (body: `{model}`)
+
+**Batch:**
+
+- `POST /api/batch` - Execute multiple provider requests in one call with configurable concurrency
 
 **Example:**
 

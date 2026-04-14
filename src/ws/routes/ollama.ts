@@ -1,10 +1,48 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { loadOllamaConfig } from "../../config/ollama.js";
-import { sendOllamaRequest } from "../../functions/ollama-request.js";
+import {
+  executeWithFailover,
+  type ProviderExecutionResult,
+} from "../../functions/failover.js";
 import { OllamaClient } from "../../ollama/client.js";
 
 const router: Router = Router();
+
+const MAX_PROMPT_LENGTH = 20_000;
+const MAX_MODEL_LENGTH = 256;
+const MAX_QUERY_LENGTH = 256;
+
+function isValidTextField(value: unknown, maxLength: number): value is string {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.length <= maxLength
+  );
+}
+
+function sendResult(res: Response, result: ProviderExecutionResult): void {
+  if (result.success) {
+    res.json({
+      response: result.content,
+      meta: {
+        providerUsed: result.providerUsed,
+        modelUsed: result.modelUsed,
+        fallbackUsed: result.fallbackUsed,
+      },
+    });
+    return;
+  }
+
+  res.status(result.error?.type === "rate-limit" ? 429 : 500).json({
+    error: result.error?.message || "Ollama request failed",
+    meta: {
+      providerUsed: result.providerUsed,
+      modelUsed: result.modelUsed,
+      fallbackUsed: result.fallbackUsed,
+    },
+  });
+}
 
 router.get("/status", async (req: Request, res: Response) => {
   try {
@@ -14,10 +52,9 @@ router.get("/status", async (req: Request, res: Response) => {
       baseURL: config.baseURL || "http://localhost:11434",
       defaultModel: config.defaultModel || null,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({
       error: "Failed to get Ollama status",
-      details: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -41,10 +78,9 @@ router.get("/list", async (req: Request, res: Response) => {
     res.json({
       models,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({
       error: "Failed to list Ollama models",
-      details: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -53,9 +89,9 @@ router.get("/search", async (req: Request, res: Response) => {
   try {
     const { query } = req.query;
 
-    if (!query || typeof query !== "string") {
+    if (!isValidTextField(query, MAX_QUERY_LENGTH)) {
       res.status(400).json({
-        error: "Missing required query parameter: query",
+        error: "Missing or invalid query parameter: query",
       });
       return;
     }
@@ -77,10 +113,9 @@ router.get("/search", async (req: Request, res: Response) => {
     res.json({
       results,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({
       error: "Failed to search Ollama models",
-      details: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -89,9 +124,21 @@ router.post("/ask", async (req: Request, res: Response) => {
   try {
     const { prompt, model } = req.body;
 
-    if (!prompt) {
+    if (!isValidTextField(prompt, MAX_PROMPT_LENGTH)) {
       res.status(400).json({
-        error: "Missing required field: prompt",
+        error: "Missing or invalid field: prompt",
+      });
+      return;
+    }
+
+    if (
+      model !== undefined &&
+      (typeof model !== "string" ||
+        model.trim().length === 0 ||
+        model.length > MAX_MODEL_LENGTH)
+    ) {
+      res.status(400).json({
+        error: "Invalid field: model",
       });
       return;
     }
@@ -105,20 +152,99 @@ router.post("/ask", async (req: Request, res: Response) => {
       return;
     }
 
-    const result = await sendOllamaRequest(
-      model || config.defaultModel || "llama2",
-      prompt,
-      "generate",
-    );
+    const resolvedModel =
+      typeof model === "string" && model.trim().length > 0
+        ? model.trim()
+        : config.defaultModel || "llama2";
 
-    res.json({
-      response: result,
+    const result = await executeWithFailover({
+      provider: "ollama",
+      model: resolvedModel,
+      prompt,
+      historySource: "gateway",
+      historyAction: "ask",
     });
-  } catch (error) {
+
+    sendResult(res, result);
+  } catch {
     res.status(500).json({
       error: "Failed to process Ollama request",
-      details: error instanceof Error ? error.message : String(error),
     });
+  }
+});
+
+router.post("/stream", async (req: Request, res: Response) => {
+  try {
+    const { prompt, model } = req.body;
+
+    if (!isValidTextField(prompt, MAX_PROMPT_LENGTH)) {
+      res.status(400).json({
+        error: "Missing or invalid field: prompt",
+      });
+      return;
+    }
+
+    if (
+      model !== undefined &&
+      (typeof model !== "string" ||
+        model.trim().length === 0 ||
+        model.length > MAX_MODEL_LENGTH)
+    ) {
+      res.status(400).json({
+        error: "Invalid field: model",
+      });
+      return;
+    }
+
+    const config = loadOllamaConfig();
+    const resolvedModel =
+      typeof model === "string" && model.trim().length > 0
+        ? model.trim()
+        : config.defaultModel || "llama2";
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const result = await executeWithFailover({
+      provider: "ollama",
+      model: resolvedModel,
+      prompt,
+      historySource: "gateway",
+      historyAction: "stream",
+    });
+
+    if (!result.success || !result.content) {
+      res.write(
+        `event: error\ndata: ${JSON.stringify({ error: result.error?.message || "Streaming failed" })}\n\n`,
+      );
+      res.end();
+      return;
+    }
+
+    const chunks = result.content
+      .split(/(\s+)/)
+      .filter((chunk) => chunk.length > 0);
+    for (const chunk of chunks) {
+      res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+    }
+
+    res.write(
+      `event: done\ndata: ${JSON.stringify({ providerUsed: result.providerUsed, fallbackUsed: result.fallbackUsed, modelUsed: result.modelUsed })}\n\n`,
+    );
+    res.end();
+  } catch {
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: "Failed to stream Ollama response",
+      });
+      return;
+    }
+
+    res.write(
+      `event: error\ndata: ${JSON.stringify({ error: "Failed to stream Ollama response" })}\n\n`,
+    );
+    res.end();
   }
 });
 
@@ -126,9 +252,9 @@ router.post("/pull", async (req: Request, res: Response) => {
   try {
     const { model } = req.body;
 
-    if (!model) {
+    if (!isValidTextField(model, MAX_MODEL_LENGTH)) {
       res.status(400).json({
-        error: "Missing required field: model",
+        error: "Missing or invalid field: model",
       });
       return;
     }
@@ -151,10 +277,9 @@ router.post("/pull", async (req: Request, res: Response) => {
       success: true,
       message: `Model ${model} pulled successfully`,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({
       error: "Failed to pull Ollama model",
-      details: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -163,9 +288,9 @@ router.delete("/delete", async (req: Request, res: Response) => {
   try {
     const { model } = req.body;
 
-    if (!model) {
+    if (!isValidTextField(model, MAX_MODEL_LENGTH)) {
       res.status(400).json({
-        error: "Missing required field: model",
+        error: "Missing or invalid field: model",
       });
       return;
     }
@@ -188,10 +313,9 @@ router.delete("/delete", async (req: Request, res: Response) => {
       success: true,
       message: `Model ${model} deleted successfully`,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({
       error: "Failed to delete Ollama model",
-      details: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -200,9 +324,9 @@ router.get("/info", async (req: Request, res: Response) => {
   try {
     const { model } = req.query;
 
-    if (!model || typeof model !== "string") {
+    if (!isValidTextField(model, MAX_MODEL_LENGTH)) {
       res.status(400).json({
-        error: "Missing required query parameter: model",
+        error: "Missing or invalid query parameter: model",
       });
       return;
     }
@@ -224,10 +348,9 @@ router.get("/info", async (req: Request, res: Response) => {
     res.json({
       info,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({
       error: "Failed to get Ollama model info",
-      details: error instanceof Error ? error.message : String(error),
     });
   }
 });

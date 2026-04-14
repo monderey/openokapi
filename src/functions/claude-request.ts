@@ -1,6 +1,11 @@
 import { getClaudeClient } from "../claude/client.js";
 import type { ClaudeRequestOptions } from "../claude/models/index.js";
 import { Validator } from "../claude/utils/validator.js";
+import {
+  recordRequestHistory,
+  type RequestHistoryAction,
+  type RequestHistorySource,
+} from "../utils/request-history.js";
 
 export interface ClaudeRequestInput {
   model: string;
@@ -8,6 +13,10 @@ export interface ClaudeRequestInput {
   temperature?: number;
   maxTokens?: number;
   system?: string;
+  history?: {
+    source?: RequestHistorySource;
+    action?: RequestHistoryAction;
+  };
 }
 
 export interface ClaudeRequestResult {
@@ -34,6 +43,10 @@ export async function sendClaudeRequest(
   const client = getClaudeClient();
   const maxRetries = 3;
   let lastError: any = null;
+  const startedAt = Date.now();
+  let attempts = 0;
+  const historySource = options.history?.source || "unknown";
+  const historyAction = options.history?.action || "ask";
 
   const request: ClaudeRequestOptions = {
     model: options.model,
@@ -48,6 +61,18 @@ export async function sendClaudeRequest(
 
   const validation = Validator.validateRequest(request);
   if (!validation.valid) {
+    recordRequestHistory({
+      provider: "claude",
+      source: historySource,
+      action: historyAction,
+      model: options.model,
+      success: false,
+      durationMs: Date.now() - startedAt,
+      promptLength: options.prompt.length,
+      errorType: "invalid",
+      errorMessage: `Validation failed: ${validation.errors.join(", ")}`,
+    });
+
     return {
       success: false,
       error: {
@@ -58,8 +83,21 @@ export async function sendClaudeRequest(
   }
 
   for (let retries = 0; retries < maxRetries; retries++) {
+    attempts += 1;
     try {
       const content = await client.sendMessage(request);
+
+      recordRequestHistory({
+        provider: "claude",
+        source: historySource,
+        action: historyAction,
+        model: options.model,
+        success: true,
+        durationMs: Date.now() - startedAt,
+        promptLength: options.prompt.length,
+        responseLength: content.length,
+        retries: attempts - 1,
+      });
 
       return {
         success: true,
@@ -78,7 +116,22 @@ export async function sendClaudeRequest(
     }
   }
 
-  return parseClaudeError(lastError);
+  const parsed = parseClaudeError(lastError);
+
+  recordRequestHistory({
+    provider: "claude",
+    source: historySource,
+    action: historyAction,
+    model: options.model,
+    success: false,
+    durationMs: Date.now() - startedAt,
+    promptLength: options.prompt.length,
+    retries: attempts - 1,
+    errorType: parsed.error?.type,
+    errorMessage: parsed.error?.message,
+  });
+
+  return parsed;
 }
 
 function parseClaudeError(error: any): ClaudeRequestResult {

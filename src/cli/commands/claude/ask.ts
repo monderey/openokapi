@@ -161,6 +161,10 @@ export async function runAsk(
       prompt,
       temperature: 0.7,
       maxTokens: 1024,
+      history: {
+        source: "cli",
+        action: "ask",
+      },
     });
 
     if (!result.success || !result.content) {

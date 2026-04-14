@@ -4,7 +4,7 @@
   <strong>Einheitliche API für mehrere KI-Anbieter | OpenAI • Claude • Discord-Integration</strong>
   <br><br>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></a>
-  <a href="https://discord.gg/yAVQXusPJd"><img src="https://img.shields.io/discord/1467172467507335403?label=Discord&logo=discord&logoColor=white&color=5865F2&style=for-the-badge" alt="Discord"></a>
+  <a href="https://discord.gg/RF8CgZbx2P"><img src="https://img.shields.io/discord/1492979180084920331?label=Discord&logo=discord&logoColor=white&color=5865F2&style=for-the-badge" alt="Discord"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
 </p>
 
@@ -57,6 +57,7 @@ OpenOKAPI enthält einen integrierten HTTP/WebSocket-API-Server, der Fernzugriff
 - 🔒 **Sichere Authentifizierung** - API-Schlüsselvalidierung und User-Agent-Verifizierung
 - 🚀 **RESTful API** - Spiegelung aller CLI-Befehle als HTTP-Endpunkte
 - 🔌 **WebSocket-Unterstützung** - Bidirektionale Echtzeitkommunikation
+- 📚 **Anfrageverlauf** - Lokales Audit-Protokoll mit Aktivitätsverlauf und Statistiken
 - ⚙️ **Konfigurierbar** - Benutzerdefinierter Port über Umgebungsvariable (Standard: 16273)
 
 ### Schnellstart:
@@ -70,7 +71,18 @@ openokapi gateway
 
 # Oder benutzerdefinierten Port angeben
 openokapi gateway --port 8080
+
+# Zeige lokalen Anfrageverlauf an
+openokapi history --stats --limit 10
+
+# Optional: Legen Sie einen Fallback-Provider für Failover fest
+openokapi config --set-fallback claude
+
+# Führen Sie Batch-Anfragen aus einer JSON-Datei aus
+openokapi batch --file ./requests.json --concurrency 4
 ```
+
+Öffnen Sie das eingebaute Panel unter `http://localhost:16273/panel` nach dem Starten des Gateways.
 
 ### Verfügbare Endpunkte:
 
@@ -78,11 +90,13 @@ openokapi gateway --port 8080
 
 - `GET /api/claude/status` - Konfigurationsstatus abrufen
 - `POST /api/claude/ask` - Prompt senden (body: `{prompt, model?}`)
+- `POST /api/claude/stream` - Antwort als SSE streamen (body: `{prompt, model?}`)
 
 **OpenAI:**
 
 - `GET /api/openai/status` - Konfigurationsstatus abrufen
 - `POST /api/openai/ask` - Prompt senden (body: `{prompt, model?}`)
+- `POST /api/openai/stream` - Antwort als SSE streamen (body: `{prompt, model?}`)
 
 **Ollama:**
 
@@ -91,8 +105,20 @@ openokapi gateway --port 8080
 - `GET /api/ollama/search?query=...` - Modelle durchsuchen
 - `GET /api/ollama/info?model=...` - Modellinformationen abrufen
 - `POST /api/ollama/ask` - Prompt senden (body: `{prompt, model?}`)
+- `POST /api/ollama/stream` - Antwort als SSE streamen (body: `{prompt, model?}`)
 - `POST /api/ollama/pull` - Modell herunterladen (body: `{model}`)
 - `DELETE /api/ollama/delete` - Modell löschen (body: `{model}`)
+
+**Batch + Panel:**
+
+- `POST /api/batch` - Verarbeiten Sie viele Anfragen mit Parallelitätskontrolle (body: `{requests, concurrency?}`)
+- `GET /panel` - Browser-Panel mit API-Schlüssel-Anmeldung, Chat, Stream-Modus, Batch-Runner und Verlaufsansicht
+
+**Verlauf:**
+
+- `GET /api/history/summary` - Aggregierte Anfrage-Statistiken abrufen
+- `GET /api/history/recent?limit=...` - Aktuelle Anfragen abrufen, optional gefiltert nach `provider`, `source` oder `action`
+- `DELETE /api/history` - Lokalen Anfrageverlauf löschen
 
 ### Beispielanfrage:
 
@@ -138,7 +164,7 @@ Jeder Beitrag wird geschätzt – Code, Tests, Dokumentation, Ideen!
 
 Tritt unserer Discord-Gemeinschaft bei und hilf mit, OpenOKAPI zu entwickeln:
 
-💬 **Discord:** https://discord.gg/yAVQXusPJd
+💬 **Discord:** https://discord.gg/RF8CgZbx2P
 
 Zögere nicht, dich zu melden, Fragen zu stellen oder neue Ideen vorzuschlagen!
 
@@ -146,14 +172,14 @@ Zögere nicht, dich zu melden, Fragen zu stellen oder neue Ideen vorzuschlagen!
 
 ## ⭐ Sternverlauf
 
-[![Star History Chart](https://api.star-history.com/svg?repos=ColiberAI/openokapi&type=Date)](https://star-history.com/#ColiberAI/openokapi&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=monderey/openokapi&type=Date)](https://star-history.com/#monderey/openokapi&Date)
 
 ## ❤️ Mitwirkende
 
 Danke an alle, die dazu beitragen, dieses Projekt besser zu machen!
 
-<a href="https://github.com/ColiberAI/openokapi/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ColiberAI/openokapi" />
+<a href="https://github.com/monderey/openokapi/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=monderey/openokapi" />
 </a>
 
 ---

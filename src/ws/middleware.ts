@@ -1,13 +1,35 @@
 import type { Request, Response, NextFunction } from "express";
 import { loadAppConfig } from "../config/app.js";
 
+export function getHeaderValue(
+  value: string | string[] | undefined,
+): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+export function getGatewayAuthConfig(): {
+  apiKey: string;
+  userAgent: string;
+} {
+  const config = loadAppConfig();
+
+  return {
+    apiKey: config.apiKey?.trim() || "",
+    userAgent: config.userAgent?.trim() || "OPENOKAPI/1.0",
+  };
+}
+
 export function validateApiKey(
   req: Request,
   res: Response,
   next: NextFunction,
 ): void {
-  const apiKey = req.headers["x-api-key"];
-  const config = loadAppConfig();
+  const apiKey = getHeaderValue(req.headers["x-api-key"]);
+  const config = getGatewayAuthConfig();
 
   if (!config.apiKey) {
     res.status(500).json({
@@ -32,11 +54,11 @@ export function validateUserAgent(
   res: Response,
   next: NextFunction,
 ): void {
-  const userAgent = req.headers["user-agent"];
-  const config = loadAppConfig();
-  const expectedUserAgent = config.userAgent || "OPENOKAPI/1.0";
+  const userAgent = getHeaderValue(req.headers["user-agent"]);
+  const panelClient = getHeaderValue(req.headers["x-openokapi-client"]);
+  const config = getGatewayAuthConfig();
 
-  if (userAgent !== expectedUserAgent) {
+  if (userAgent !== config.userAgent && panelClient !== "web-panel") {
     res.status(403).json({
       error: "Invalid User-Agent.",
     });

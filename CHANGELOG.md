@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.4.14]
+
+### Added
+
+- **Request History System**:
+  - New module `src/utils/request-history.ts` with local JSONL-based request logging
+  - New CLI command: `openokapi history` with `--summary`, `--recent`, `--clear` options and filters (`--provider`, `--source`, `--action`)
+  - New HTTP endpoints: `GET /api/history/summary`, `GET /api/history/recent`, `DELETE /api/history`
+  - Request history persisted in `~/.openokapi/request-history.jsonl` with read-only file permissions (0600)
+  - Automatic history tracking across CLI and API calls
+
+- **Failover and Batch Processing**:
+  - New failover execution layer in `src/functions/failover.ts` for automatic provider fallback
+  - New CLI command: `openokapi batch` with `--file` and `--concurrency` options for batch request processing
+  - New HTTP endpoint: `POST /api/batch` for concurrent multi-provider requests
+  - Configurable fallback provider via `openokapi config --set-fallback`
+
+- **Streaming Endpoints**:
+  - New `POST /api/claude/stream`, `POST /api/openai/stream`, `POST /api/ollama/stream` endpoints with SSE (Server-Sent Events)
+  - Real-time response streaming across all AI providers
+
+- **Web Panel UI**:
+  - Full-featured web panel served at `GET /panel` with in-browser HTML/CSS/JS
+  - API key login with localStorage session persistence
+  - Chat interface with provider/model selection
+  - Streaming mode toggle and manual ask/stream endpoints
+  - Batch request runner with JSON payload input and concurrency control
+  - History viewer with recent requests filtering
+  - Responsive design with mobile drawer menu and adaptive layout
+  - Panel client authenticated via `X-OpenOKAPI-Client: web-panel` header
+
+- **Web Panel UI/UX Refinements**:
+  - Removed Stream checkbox from navbar (always uses streaming by default)
+  - Reduced composer action button sizes: 36x36px (desktop), 34x34px (tablet), 32x32px (mobile)
+  - Reduced button SVG icons to 16x16px for better proportions
+  - Changed user message bubble background to match composer (#2b2b2f) for visual cohesion
+  - Reduced composer input font size: 15px (desktop), 13px (mobile/tablet) for subtler appearance
+  - Removed border and padding from provider/model selector container for cleaner layout
+  - Improved responsive breakpoint alignment (979px for mobile drawer trigger)
+  - Ensured consistent button layout (Clear chat left, Send right) across all device sizes
+
+### Changed
+
+- **Security Hardening**:
+  - Enhanced API key validation with User-Agent verification in gateway middleware
+  - Config file permissions updated to 0600 (read-only by owner) for API keys and history
+  - Config directory permissions set to 0700 (secure directory access)
+  - Improved error messages to avoid leaking sensitive provider information in CLI/API responses
+
+- **provider Routes (OpenAI, Claude, Ollama)**:
+  - Integrated failover logic for automatic fallback between providers
+  - Enhanced streaming response handling with specific error messages (e.g., rate limit detection)
+  - Added request metadata tracking (provider used, fallback status)
+
+- **CLI Commands**:
+  - Updated `ask` commands across all providers (OpenAI, Claude, Ollama) to support failover
+  - Improved error handling and user feedback in CLI output
+
+- **Documentation**:
+  - Updated `README.md` with complete Gateway API section including streaming, batch, and history
+  - Updated Polish translation (`lang/pl/README.md`) with Gateway API details
+  - Updated German translation (`lang/de/README.md`) with Gateway API details
+  - Updated `docs/COMMANDS.md` with new CLI commands (history, batch, set-fallback)
+
+### Fixed
+
+- Fixed CLI build packaging path issues for filesystems with spaces
+- Fixed global CLI wrapper path resolution for consistent installation
+- Improved OpenAI stream error handling to detect and report specific errors (rate limits, auth failures) instead of generic messages
+- Stabilized TypeScript strict mode (`exactOptionalPropertyTypes`) across all endpoint implementations
+- Fixed concurrent batch request handling edge cases
+
 ## [2026.2.7]
 
 ### Added

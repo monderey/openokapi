@@ -1,9 +1,10 @@
 import fs from "node:fs";
-import { ensureConfigDir, getAppConfigPath } from "./paths.js";
+import { getAppConfigPath, writePrivateFile } from "./paths.js";
 
 export type AppConfig = {
   apiKey?: string;
   userAgent?: string;
+  fallbackProvider?: "openai" | "claude" | "ollama";
 };
 
 export function loadAppConfig(): AppConfig {
@@ -20,12 +21,7 @@ export function loadAppConfig(): AppConfig {
 }
 
 export function saveAppConfig(config: AppConfig): void {
-  ensureConfigDir();
-  fs.writeFileSync(
-    getAppConfigPath(),
-    JSON.stringify(config, null, 2),
-    "utf-8",
-  );
+  writePrivateFile(getAppConfigPath(), JSON.stringify(config, null, 2));
 }
 
 export function updateAppConfig(partial: AppConfig): AppConfig {

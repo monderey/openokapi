@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { ensureConfigDir, getDiscordConfigPath } from "./paths.js";
+import { getDiscordConfigPath, writePrivateFile } from "./paths.js";
 
 export type DiscordConfig = {
   token?: string;
@@ -28,12 +28,7 @@ export function loadDiscordConfig(): DiscordConfig {
 }
 
 export function saveDiscordConfig(config: DiscordConfig): void {
-  ensureConfigDir();
-  fs.writeFileSync(
-    getDiscordConfigPath(),
-    JSON.stringify(config, null, 2),
-    "utf-8",
-  );
+  writePrivateFile(getDiscordConfigPath(), JSON.stringify(config, null, 2));
 }
 
 export function updateDiscordConfig(partial: DiscordConfig): DiscordConfig {

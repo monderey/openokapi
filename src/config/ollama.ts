@@ -1,10 +1,9 @@
 import fs from "node:fs";
 import {
-  ensureConfigDir,
   getOllamaConfigPath,
   getOllamaModelsPath,
+  writePrivateFile,
 } from "./paths.js";
-
 export type OllamaModel = {
   name: string;
   model: string;
@@ -44,12 +43,7 @@ export function loadOllamaConfig(): OllamaConfig {
 }
 
 export function saveOllamaConfig(config: OllamaConfig): void {
-  ensureConfigDir();
-  fs.writeFileSync(
-    getOllamaConfigPath(),
-    JSON.stringify(config, null, 2),
-    "utf-8",
-  );
+  writePrivateFile(getOllamaConfigPath(), JSON.stringify(config, null, 2));
 }
 
 export function updateOllamaConfig(partial: OllamaConfig): OllamaConfig {
@@ -69,12 +63,7 @@ export function loadOllamaModels(): OllamaModel[] {
 }
 
 export function saveOllamaModels(models: OllamaModel[]): void {
-  ensureConfigDir();
-  fs.writeFileSync(
-    getOllamaModelsPath(),
-    JSON.stringify(models, null, 2),
-    "utf-8",
-  );
+  writePrivateFile(getOllamaModelsPath(), JSON.stringify(models, null, 2));
 }
 
 export function findOllamaModel(modelName: string): OllamaModel | undefined {

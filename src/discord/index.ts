@@ -16,7 +16,12 @@ import {
   updateDiscordConfig,
   type DiscordConfig,
 } from "../config/discord.js";
-import { getDiscordPidPath, getDiscordLogPath } from "../config/paths.js";
+import {
+  ensurePrivateFile,
+  getDiscordPidPath,
+  getDiscordLogPath,
+  writePrivateFile,
+} from "../config/paths.js";
 
 let activeSocket: WebSocket | null = null;
 
@@ -54,7 +59,8 @@ function buildContext(socket: WebSocket) {
 
 function writePidFile(): void {
   const pidPath = getDiscordPidPath();
-  fs.writeFileSync(pidPath, String(process.pid), "utf-8");
+  writePrivateFile(pidPath, String(process.pid));
+
   process.on("exit", () => {
     try {
       fs.rmSync(pidPath, { force: true });
@@ -76,9 +82,7 @@ function setupLogging(): void {
   const logPath = getDiscordLogPath();
 
   try {
-    if (!fs.existsSync(logPath)) {
-      fs.writeFileSync(logPath, "", "utf-8");
-    }
+    ensurePrivateFile(logPath);
   } catch {
     // ignore
   }

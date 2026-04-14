@@ -152,8 +152,8 @@ Feel free to reach out, ask questions, or propose new ideas!
 
 Thanks to everyone who helps make this project better!
 
-<a href="https://github.com/ColiberAI/openokapi/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ColiberAI/openokapi" />
+<a href="https://github.com/monderey/openokapi/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=monderey/openokapi" />
 </a>
 
 ---

@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.4.15]
+
+### Added
+
+- **Extended control-plane modules and configs**:
+  - New config modules: automations, hooks, scheduler, heartbeat, standing-orders, task-flow, tasks ledger, capabilities, cache, budget, guardrails, profiles, pricing, conversations, escalations
+  - New runtime modules: status, self-test, doctor, alerts, incidents, maintenance windows, escalations, smart router, profile runner, automation engine, hooks engine, event bus, backup, reset, security audit, budget enforcer, conversation chat
+  - New utility modules: response cache, pricing/cost helpers, template rendering
+
+- **New CLI commands**:
+  - `profile`, `cache`, `costs`, `replay`, `chat`, `pricing`, `capabilities`, `integrations`, `router`, `guardrails`, `eval`, `budget`, `automations`, `hooks`, `scheduler`, `self-test`, `standing-orders`, `task-flow`, `heartbeat`, `tasks`, `doctor`, `backup`, `reset`, `security`, `status`, `alerts`, `incidents`, `maintenance-windows`, `escalations`
+
+- **Gateway/API expansion**:
+  - New route families: cache, costs, pricing, profiles, chat, capabilities, integrations (incl. DLQ ops), router, guardrails, evals, budget, automations, hooks, scheduler, heartbeat, standing-orders, task-flow, tasks, doctor, backup, reset, security, status, alerts, incidents, maintenance-windows, escalations, system self-test
+
+- **Operational features**:
+  - Background task ledger with audit, maintenance, cancellation, and notify policies
+  - Task flow orchestration with audit and retention maintenance
+  - Scheduler engine with `cron`, `every`, and `at` scheduling modes
+  - Heartbeat engine for periodic autonomous checks
+  - Incidents + alerts model with maintenance mute logic
+  - Escalation rules with cooldown and optional auto-incident creation
+  - Backup snapshot creation and checksum verification
+  - Reset planner/executor for scoped local state cleanup
+
+- **Integration improvements**:
+  - New `pagerduty` integration type support across config/CLI/routes
+  - PagerDuty-specific payload mapping (`trigger`/`resolve`, severity mapping, dedup key handling)
+
+### Changed
+
+- **Maintenance-aware behavior**:
+  - Alert reporting can bypass mute using `ignoreMute`
+  - Incident creation supports forced mode during maintenance (`forceWhenMuted` / CLI `--force`)
+
+- **Security and reset coverage**:
+  - Security audit and reset scopes now include maintenance windows and escalations state files
+
+### Documentation
+
+- Updated main docs and localized docs (`README.md`, `docs/COMMANDS.md`, `lang/pl/README.md`, `lang/de/README.md`) to include:
+  - New control-plane commands
+  - Maintenance windows and escalations workflows
+  - PagerDuty integration usage examples
+  - Additional automation and diagnostics coverage
+
 ## [2026.4.14]
 
 ### Added

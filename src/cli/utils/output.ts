@@ -98,6 +98,137 @@ export function printHelp(): void {
       `  History: ${chalk.cyan("openokapi history [--show|--stats|--clear]")}`,
     ),
   );
+  console.log(
+    line(
+      `  Profiles: ${chalk.cyan("openokapi profile [--list|--show|--set|--run]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Cache: ${chalk.cyan("openokapi cache [--provider ... --exclude-model ...] [--clear]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Pricing: ${chalk.cyan("openokapi pricing [--set|--delete|--provider|--match|--input|--output]")}`,
+    ),
+  );
+  console.log(line(`  Costs: ${chalk.cyan("openokapi costs [--days N]")}`));
+  console.log(
+    line(`  Replay: ${chalk.cyan("openokapi replay --id <history-id>")}`),
+  );
+  console.log(
+    line(
+      `  Chat: ${chalk.cyan("openokapi chat --start|--list|--id <conversation-id> --ask <prompt>|--summarize")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Capabilities: ${chalk.cyan("openokapi capabilities [--enable|--disable <key>]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Integrations: ${chalk.cyan("openokapi integrations [--set|--delete|--dispatch]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Router: ${chalk.cyan("openokapi router [--strategy balanced|cost|speed|reliability]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Guardrails: ${chalk.cyan("openokapi guardrails [--add-block <term>] [--scan <text>]")}`,
+    ),
+  );
+  console.log(
+    line(`  Eval: ${chalk.cyan("openokapi eval --prompt ... --response ...")}`),
+  );
+  console.log(
+    line(
+      `  Budget: ${chalk.cyan("openokapi budget [--set --enabled true --daily 10 --monthly 200]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Automations: ${chalk.cyan("openokapi automations [--set|--delete|--simulate]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Hooks: ${chalk.cyan("openokapi hooks [--set|--delete|--simulate]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Heartbeat: ${chalk.cyan("openokapi heartbeat [--set|--run|--reload]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Standing Orders: ${chalk.cyan("openokapi standing-orders [--set|--delete|--preview]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Scheduler: ${chalk.cyan("openokapi scheduler [--set|--delete|--run|--reload]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Task Flow: ${chalk.cyan("openokapi task-flow [--set|--delete|--run|--cancel]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Tasks: ${chalk.cyan("openokapi tasks [list|show <lookup>|cancel <lookup>|notify <lookup> <policy>|audit|maintenance (--status|--apply)|flow (list|show|cancel|audit|maintenance)]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Doctor: ${chalk.cyan("openokapi doctor [--repair] [--retention-days N] [--json]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Backup: ${chalk.cyan("openokapi backup [list|create|verify <id>] [--json]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Reset: ${chalk.cyan("openokapi reset --scope <config|config+history|full> [--dry-run] [--yes] [--json]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Security: ${chalk.cyan("openokapi security [audit] [--fix] [--json]")}`,
+    ),
+  );
+  console.log(
+    line(`  Status: ${chalk.cyan("openokapi status [--deep] [--json]")}`),
+  );
+  console.log(
+    line(
+      `  Alerts: ${chalk.cyan("openokapi alerts [--limit N] [--deep] [--ignore-mute] [--json]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Incidents: ${chalk.cyan("openokapi incidents [list|create|show <id>|ack <id>|resolve <id>] [--force] [--json]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Maintenance: ${chalk.cyan("openokapi maintenance-windows [--set|--delete|--status] [--json]")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Escalations: ${chalk.cyan("openokapi escalations [--set|--delete|--run] [--json]")}`,
+    ),
+  );
+  console.log(line(`  Self Test: ${chalk.cyan("openokapi self-test")}`));
   console.log(line(""));
   console.log(`${chalk.dim("├" + "─".repeat(width - 2) + "┘")}`);
   console.log(chalk.dim("│"));
@@ -123,6 +254,55 @@ export function printHelp(): void {
       `  Set Fallback: ${chalk.cyan("openokapi config --set-fallback <provider|off>")}`,
     ),
   );
+  console.log(line(`  Profiles: ${chalk.cyan("openokapi profile")}`));
+  console.log(line(`  Cache: ${chalk.cyan("openokapi cache")}`));
+  console.log(line(`  Pricing: ${chalk.cyan("openokapi pricing")}`));
+  console.log(line(`  Costs: ${chalk.cyan("openokapi costs")}`));
+  console.log(line(`  Replay: ${chalk.cyan("openokapi replay")}`));
+  console.log(line(`  Chat: ${chalk.cyan("openokapi chat")}`));
+  console.log(line(`  Capabilities: ${chalk.cyan("openokapi capabilities")}`));
+  console.log(line(`  Integrations: ${chalk.cyan("openokapi integrations")}`));
+  console.log(line(`  Router: ${chalk.cyan("openokapi router")}`));
+  console.log(line(`  Guardrails: ${chalk.cyan("openokapi guardrails")}`));
+  console.log(line(`  Eval: ${chalk.cyan("openokapi eval")}`));
+  console.log(line(`  Budget: ${chalk.cyan("openokapi budget")}`));
+  console.log(line(`  Automations: ${chalk.cyan("openokapi automations")}`));
+  console.log(line(`  Hooks: ${chalk.cyan("openokapi hooks")}`));
+  console.log(line(`  Heartbeat: ${chalk.cyan("openokapi heartbeat")}`));
+  console.log(
+    line(`  Standing Orders: ${chalk.cyan("openokapi standing-orders")}`),
+  );
+  console.log(line(`  Scheduler: ${chalk.cyan("openokapi scheduler")}`));
+  console.log(line(`  Task Flow: ${chalk.cyan("openokapi task-flow")}`));
+  console.log(line(`  Tasks: ${chalk.cyan("openokapi tasks list")}`));
+  console.log(line(`  Doctor: ${chalk.cyan("openokapi doctor")}`));
+  console.log(line(`  Backup: ${chalk.cyan("openokapi backup")}`));
+  console.log(
+    line(`  Reset: ${chalk.cyan("openokapi reset --scope config --dry-run")}`),
+  );
+  console.log(line(`  Security: ${chalk.cyan("openokapi security --json")}`));
+  console.log(
+    line(`  Status: ${chalk.cyan("openokapi status --deep --json")}`),
+  );
+  console.log(
+    line(`  Alerts: ${chalk.cyan("openokapi alerts --limit 20 --json")}`),
+  );
+  console.log(
+    line(
+      `  Incidents: ${chalk.cyan("openokapi incidents create --deep --json")}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Maintenance: ${chalk.cyan('openokapi maintenance-windows --set --name "Deploy" --start-at <ISO> --end-at <ISO>')}`,
+    ),
+  );
+  console.log(
+    line(
+      `  Escalations: ${chalk.cyan('openokapi escalations --set --name "Critical errors" --trigger alerts.error --min-severity error --min-count 2')}`,
+    ),
+  );
+  console.log(line(`  Self Test: ${chalk.cyan("openokapi self-test")}`));
   console.log(line(`  History: ${chalk.cyan("openokapi history")}`));
   console.log(line(""));
   console.log(`${chalk.dim("├" + "─".repeat(width - 2) + "┘")}`);

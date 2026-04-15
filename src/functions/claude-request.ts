@@ -6,6 +6,7 @@ import {
   type RequestHistoryAction,
   type RequestHistorySource,
 } from "../utils/request-history.js";
+import { estimateCostUsd, estimateTokensFromText } from "../utils/costs.js";
 
 export interface ClaudeRequestInput {
   model: string;
@@ -16,6 +17,8 @@ export interface ClaudeRequestInput {
   history?: {
     source?: RequestHistorySource;
     action?: RequestHistoryAction;
+    cacheKey?: string;
+    cacheHit?: boolean;
   };
 }
 
@@ -47,6 +50,8 @@ export async function sendClaudeRequest(
   let attempts = 0;
   const historySource = options.history?.source || "unknown";
   const historyAction = options.history?.action || "ask";
+  const cacheKey = options.history?.cacheKey;
+  const cacheHit = options.history?.cacheHit;
 
   const request: ClaudeRequestOptions = {
     model: options.model,
@@ -71,6 +76,8 @@ export async function sendClaudeRequest(
       promptLength: options.prompt.length,
       errorType: "invalid",
       errorMessage: `Validation failed: ${validation.errors.join(", ")}`,
+      cacheKey,
+      cacheHit,
     });
 
     return {
@@ -86,6 +93,8 @@ export async function sendClaudeRequest(
     attempts += 1;
     try {
       const content = await client.sendMessage(request);
+      const promptTokens = estimateTokensFromText(options.prompt);
+      const completionTokens = estimateTokensFromText(content);
 
       recordRequestHistory({
         provider: "claude",
@@ -97,6 +106,17 @@ export async function sendClaudeRequest(
         promptLength: options.prompt.length,
         responseLength: content.length,
         retries: attempts - 1,
+        promptTokens,
+        completionTokens,
+        totalTokens: promptTokens + completionTokens,
+        estimatedCostUsd: estimateCostUsd({
+          provider: "claude",
+          model: options.model,
+          promptTokens,
+          completionTokens,
+        }),
+        cacheKey,
+        cacheHit,
       });
 
       return {
@@ -129,6 +149,8 @@ export async function sendClaudeRequest(
     retries: attempts - 1,
     errorType: parsed.error?.type,
     errorMessage: parsed.error?.message,
+    cacheKey,
+    cacheHit,
   });
 
   return parsed;

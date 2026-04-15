@@ -2,9 +2,12 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import {
   clearRequestHistory,
+  findRequestHistoryById,
+  recordRequestHistory,
   readRequestHistory,
   summarizeRequestHistory,
 } from "../../utils/request-history.js";
+import { replayCachedResponse } from "../../utils/response-cache.js";
 
 const router: Router = Router();
 
@@ -28,6 +31,15 @@ function getTextQuery(value: unknown): string | undefined {
 
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function getParamId(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  return undefined;
 }
 
 router.get("/summary", (req: Request, res: Response) => {
@@ -68,6 +80,51 @@ router.delete("/", (req: Request, res: Response) => {
   res.json({
     success: true,
     message: "Request history cleared",
+  });
+});
+
+router.post("/replay/:id", (req: Request, res: Response) => {
+  const historyId = getParamId(req.params.id);
+  if (!historyId) {
+    res.status(400).json({ error: "Missing history id" });
+    return;
+  }
+
+  const entry = findRequestHistoryById(historyId);
+  if (!entry || !entry.cacheKey) {
+    res
+      .status(404)
+      .json({ error: "History entry not found or not replayable" });
+    return;
+  }
+
+  const content = replayCachedResponse(entry.cacheKey);
+  if (!content) {
+    res.status(404).json({ error: "Cached response not found or expired" });
+    return;
+  }
+
+  recordRequestHistory({
+    provider: entry.provider,
+    source: "gateway",
+    action: "replay",
+    model: entry.model,
+    success: true,
+    durationMs: 1,
+    promptLength: entry.promptLength,
+    responseLength: content.length,
+    cacheHit: true,
+    cacheKey: entry.cacheKey,
+    promptTokens: entry.promptTokens,
+    completionTokens: entry.completionTokens,
+    totalTokens: entry.totalTokens,
+    estimatedCostUsd: 0,
+  });
+
+  res.json({
+    id: historyId,
+    cacheKey: entry.cacheKey,
+    response: content,
   });
 });
 

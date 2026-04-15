@@ -132,6 +132,59 @@ curl -X POST http://localhost:16273/api/openai/ask \
 
 ---
 
+## Automatyzacja i Tasks
+
+OpenOKAPI obsluguje teraz rozszerzony zestaw automatyzacji w stylu OpenClaw:
+
+- Scheduler (`cron`, `every`, `at`)
+- Automations (reguly i akcje eventowe)
+- Heartbeat
+- Hooks (zdarzeniowe reguly)
+- Standing Orders
+- Task Flow (orkiestracja wieloetapowa)
+- Background Tasks Ledger (audit, cancel, notify policy, maintenance)
+
+Najwazniejsze komendy:
+
+```bash
+openokapi tasks list --status running
+openokapi tasks show <lookup>
+openokapi tasks audit
+openokapi tasks maintenance --status
+openokapi tasks flow list --status running
+openokapi tasks flow show <lookup>
+openokapi tasks flow audit
+openokapi tasks flow maintenance --status
+openokapi tasks flow maintenance --apply --retention-days 14
+openokapi automations --set --name "Auto escalate" --event request.error --actions '[{"type":"dispatchIntegration","event":"automation.error"}]'
+openokapi automations --simulate --event request.error --payload '{"provider":"openai","success":false}'
+openokapi doctor
+openokapi doctor --repair --retention-days 14
+openokapi backup list
+openokapi backup create
+openokapi backup verify <backup-id>
+openokapi reset --scope config --dry-run
+openokapi reset --scope config+history --yes
+openokapi security --json
+openokapi security --fix
+openokapi self-test
+openokapi status
+openokapi status --deep --json
+openokapi alerts
+openokapi alerts --limit 20 --ignore-mute --json
+openokapi incidents create --deep --force
+openokapi incidents list --status open
+openokapi incidents resolve <incident-id> --note "mitigated"
+openokapi maintenance-windows --set --name "Deploy" --start-at 2026-01-01T10:00:00Z --end-at 2026-01-01T12:00:00Z --mute-alerts true --mute-incidents true
+openokapi maintenance-windows --status --json
+openokapi escalations --set --name "Critical errors" --trigger alerts.error --min-severity error --min-count 2 --integration-event escalation.critical --auto-incident true --cooldown-minutes 15
+openokapi escalations --run --reason "manual check"
+```
+
+Pelna referencja: `docs/AUTOMATION.md` oraz `docs/COMMANDS.md`.
+
+---
+
 ## 🤝 Wkład w Projekt
 
 OpenOKAPI to projekt napędzany przez społeczność i szukamy współpracowników!

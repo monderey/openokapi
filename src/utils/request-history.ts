@@ -11,6 +11,7 @@ export type RequestHistoryAction =
   | "chat"
   | "generate"
   | "stream"
+  | "replay"
   | "validate"
   | "other";
 
@@ -28,6 +29,12 @@ export interface RequestHistoryEntry {
   retries?: number | undefined;
   errorType?: string | undefined;
   errorMessage?: string | undefined;
+  cacheHit?: boolean | undefined;
+  cacheKey?: string | undefined;
+  promptTokens?: number | undefined;
+  completionTokens?: number | undefined;
+  totalTokens?: number | undefined;
+  estimatedCostUsd?: number | undefined;
 }
 
 export interface RequestHistoryInput {
@@ -42,6 +49,12 @@ export interface RequestHistoryInput {
   retries?: number | undefined;
   errorType?: string | undefined;
   errorMessage?: string | undefined;
+  cacheHit?: boolean | undefined;
+  cacheKey?: string | undefined;
+  promptTokens?: number | undefined;
+  completionTokens?: number | undefined;
+  totalTokens?: number | undefined;
+  estimatedCostUsd?: number | undefined;
 }
 
 export interface RequestHistorySummary {
@@ -87,6 +100,16 @@ export function recordRequestHistory(
     retries: normalizeLength(input.retries) || undefined,
     errorType: trimMessage(input.errorType, 80),
     errorMessage: trimMessage(input.errorMessage, 240),
+    cacheHit: input.cacheHit === true ? true : undefined,
+    cacheKey: trimMessage(input.cacheKey, 80),
+    promptTokens: normalizeLength(input.promptTokens) || undefined,
+    completionTokens: normalizeLength(input.completionTokens) || undefined,
+    totalTokens: normalizeLength(input.totalTokens) || undefined,
+    estimatedCostUsd:
+      typeof input.estimatedCostUsd === "number" &&
+      Number.isFinite(input.estimatedCostUsd)
+        ? Number(input.estimatedCostUsd.toFixed(6))
+        : undefined,
   };
 
   ensurePrivateFile(getRequestHistoryPath());
@@ -127,6 +150,28 @@ export function readRequestHistory(limit = 50): RequestHistoryEntry[] {
   } catch {
     return [];
   }
+}
+
+export function findRequestHistoryById(
+  entryId: string,
+): RequestHistoryEntry | undefined {
+  if (!entryId.trim()) {
+    return undefined;
+  }
+
+  return readRequestHistory(10_000).find((entry) => entry.id === entryId);
+}
+
+export function filterRequestHistoryByDays(
+  entries: RequestHistoryEntry[],
+  days: number,
+): RequestHistoryEntry[] {
+  if (!Number.isFinite(days) || days <= 0) {
+    return entries;
+  }
+
+  const threshold = Date.now() - Math.floor(days * 24 * 60 * 60 * 1000);
+  return entries.filter((entry) => Date.parse(entry.timestamp) >= threshold);
 }
 
 export function clearRequestHistory(): void {

@@ -5,16 +5,24 @@ import {
   type RequestHistoryAction,
   type RequestHistorySource,
 } from "../utils/request-history.js";
+import {
+  estimateCostUsd,
+  estimateTokensFromLength,
+  estimateTokensFromText,
+} from "../utils/costs.js";
 
 export interface OpenAIRequestOptions {
   model: string;
   prompt: string;
   temperature?: number;
   maxTokens?: number;
+  system?: string;
   stream?: boolean;
   history?: {
     source?: RequestHistorySource;
     action?: RequestHistoryAction;
+    cacheKey?: string;
+    cacheHit?: boolean;
   };
 }
 
@@ -51,15 +59,23 @@ export async function sendOpenAIRequest(
   let attempts = 0;
   const historySource = options.history?.source || "unknown";
   const historyAction = options.history?.action || "ask";
+  const cacheKey = options.history?.cacheKey;
+  const cacheHit = options.history?.cacheHit;
 
   for (let retries = 0; retries < maxRetries; retries++) {
     attempts += 1;
     try {
       const request: ChatCompletionRequest = {
         model: options.model,
-        messages: [{ role: "user", content: options.prompt }],
+        messages: [],
         temperature: options.temperature ?? 0.7,
       };
+
+      if (options.system) {
+        request.messages.push({ role: "system", content: options.system });
+      }
+
+      request.messages.push({ role: "user", content: options.prompt });
 
       if (options.maxTokens) {
         request.max_tokens = options.maxTokens;
@@ -67,6 +83,18 @@ export async function sendOpenAIRequest(
 
       const response = await client.createChatCompletion(request);
       const content = response.choices[0]?.message?.content || "";
+      const promptTokens =
+        response.usage?.prompt_tokens || estimateTokensFromText(options.prompt);
+      const completionTokens =
+        response.usage?.completion_tokens || estimateTokensFromText(content);
+      const totalTokens =
+        response.usage?.total_tokens || promptTokens + completionTokens;
+      const estimatedCostUsd = estimateCostUsd({
+        provider: "openai",
+        model: options.model,
+        promptTokens,
+        completionTokens,
+      });
 
       recordRequestHistory({
         provider: "openai",
@@ -78,6 +106,12 @@ export async function sendOpenAIRequest(
         promptLength: options.prompt.length,
         responseLength: content.length,
         retries: attempts - 1,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+        estimatedCostUsd,
+        cacheKey,
+        cacheHit,
       });
 
       return {
@@ -110,6 +144,8 @@ export async function sendOpenAIRequest(
     retries: attempts - 1,
     errorType: parsed.error?.type,
     errorMessage: parsed.error?.message,
+    cacheKey,
+    cacheHit,
   });
 
   return parsed;
@@ -121,20 +157,28 @@ export async function streamOpenAIRequest(
   const startedAt = Date.now();
   const historySource = options.history?.source || "unknown";
   const historyAction = options.history?.action || "stream";
+  const cacheKey = options.history?.cacheKey;
+  const cacheHit = options.history?.cacheHit;
 
   try {
     const client = getOpenAIClient();
 
     const requestParams: {
       model: string;
-      messages: { role: "user"; content: string }[];
+      messages: Array<{ role: "system" | "user"; content: string }>;
       temperature?: number;
       max_tokens?: number;
     } = {
       model: options.model,
-      messages: [{ role: "user", content: options.prompt }],
+      messages: [],
       temperature: options.temperature ?? 0.7,
     };
+
+    if (options.system) {
+      requestParams.messages.push({ role: "system", content: options.system });
+    }
+
+    requestParams.messages.push({ role: "user", content: options.prompt });
 
     if (options.maxTokens) {
       requestParams.max_tokens = options.maxTokens;
@@ -160,6 +204,19 @@ export async function streamOpenAIRequest(
           durationMs: Date.now() - startedAt,
           promptLength: options.prompt.length,
           responseLength,
+          promptTokens: estimateTokensFromText(options.prompt),
+          completionTokens: estimateTokensFromLength(responseLength),
+          totalTokens:
+            estimateTokensFromText(options.prompt) +
+            estimateTokensFromLength(responseLength),
+          estimatedCostUsd: estimateCostUsd({
+            provider: "openai",
+            model: options.model,
+            promptTokens: estimateTokensFromText(options.prompt),
+            completionTokens: estimateTokensFromLength(responseLength),
+          }),
+          cacheKey,
+          cacheHit,
         });
       } catch (error) {
         const parsed = parseOpenAIError(error);
@@ -173,6 +230,8 @@ export async function streamOpenAIRequest(
           promptLength: options.prompt.length,
           errorType: parsed.error?.type,
           errorMessage: parsed.error?.message,
+          cacheKey,
+          cacheHit,
         });
         throw error;
       }
@@ -194,6 +253,8 @@ export async function streamOpenAIRequest(
       promptLength: options.prompt.length,
       errorType: parsed.error?.type,
       errorMessage: parsed.error?.message,
+      cacheKey,
+      cacheHit,
     });
 
     return {

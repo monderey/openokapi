@@ -6,14 +6,59 @@ import {
   getGatewayAuthConfig,
   getHeaderValue,
   validateApiKey,
+  validateGatewayRateLimit,
   validateUserAgent,
 } from "./middleware.js";
 import claudeRouter from "./routes/claude.js";
 import batchRouter from "./routes/batch.js";
 import historyRouter from "./routes/history.js";
+import profilesRouter from "./routes/profiles.js";
+import cacheRouter from "./routes/cache.js";
+import costsRouter from "./routes/costs.js";
+import chatRouter from "./routes/chat.js";
+import pricingRouter from "./routes/pricing.js";
+import capabilitiesRouter from "./routes/capabilities.js";
+import integrationsRouter from "./routes/integrations.js";
+import routerControlRouter from "./routes/router.js";
+import guardrailsRouter from "./routes/guardrails.js";
+import evalsRouter from "./routes/evals.js";
+import budgetRouter from "./routes/budget.js";
+import automationsRouter from "./routes/automations.js";
+import schedulerRouter from "./routes/scheduler.js";
+import systemRouter from "./routes/system.js";
+import hooksRouter from "./routes/hooks.js";
+import heartbeatRouter from "./routes/heartbeat.js";
+import standingOrdersRouter from "./routes/standing-orders.js";
+import taskFlowRouter from "./routes/task-flow.js";
+import tasksRouter from "./routes/tasks.js";
+import doctorRouter from "./routes/doctor.js";
 import openaiRouter from "./routes/openai.js";
 import ollamaRouter from "./routes/ollama.js";
 import panelRouter from "./routes/panel-router.js";
+import backupRouter from "./routes/backup.js";
+import resetRouter from "./routes/reset.js";
+import securityRouter from "./routes/security.js";
+import statusRouter from "./routes/status.js";
+import alertsRouter from "./routes/alerts.js";
+import incidentsRouter from "./routes/incidents.js";
+import maintenanceWindowsRouter from "./routes/maintenance-windows.js";
+import escalationsRouter from "./routes/escalations.js";
+import {
+  startSchedulerEngine,
+  stopSchedulerEngine,
+} from "../functions/scheduler-engine.js";
+import {
+  startHeartbeatEngine,
+  stopHeartbeatEngine,
+} from "../functions/heartbeat-engine.js";
+import {
+  startTaskLedgerMaintenanceSweeper,
+  stopTaskLedgerMaintenanceSweeper,
+} from "../functions/tasks-ledger.js";
+import {
+  startTaskFlowMaintenanceSweeper,
+  stopTaskFlowMaintenanceSweeper,
+} from "../functions/task-flow.js";
 
 export interface ServerConfig {
   port: number;
@@ -33,11 +78,34 @@ export class GatewayServer {
   }
 
   private setupMiddleware(): void {
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(
+      express.json({
+        limit: "1mb",
+        strict: true,
+      }),
+    );
+    this.app.use(
+      express.urlencoded({
+        extended: true,
+        limit: "256kb",
+        parameterLimit: 100,
+      }),
+    );
+
+    this.app.use((req, res, next) => {
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("X-Frame-Options", "DENY");
+      res.setHeader("Referrer-Policy", "no-referrer");
+      res.setHeader(
+        "Permissions-Policy",
+        "geolocation=(), microphone=(), camera=()",
+      );
+      next();
+    });
 
     this.app.use("/api", validateUserAgent);
     this.app.use("/api", validateApiKey);
+    this.app.use("/api", validateGatewayRateLimit);
   }
 
   private setupRoutes(): void {
@@ -55,6 +123,34 @@ export class GatewayServer {
     this.app.use("/api/ollama", ollamaRouter);
     this.app.use("/api/batch", batchRouter);
     this.app.use("/api/history", historyRouter);
+    this.app.use("/api/profiles", profilesRouter);
+    this.app.use("/api/cache", cacheRouter);
+    this.app.use("/api/costs", costsRouter);
+    this.app.use("/api/chat", chatRouter);
+    this.app.use("/api/pricing", pricingRouter);
+    this.app.use("/api/capabilities", capabilitiesRouter);
+    this.app.use("/api/integrations", integrationsRouter);
+    this.app.use("/api/router", routerControlRouter);
+    this.app.use("/api/guardrails", guardrailsRouter);
+    this.app.use("/api/evals", evalsRouter);
+    this.app.use("/api/budget", budgetRouter);
+    this.app.use("/api/automations", automationsRouter);
+    this.app.use("/api/hooks", hooksRouter);
+    this.app.use("/api/heartbeat", heartbeatRouter);
+    this.app.use("/api/standing-orders", standingOrdersRouter);
+    this.app.use("/api/scheduler", schedulerRouter);
+    this.app.use("/api/task-flow", taskFlowRouter);
+    this.app.use("/api/tasks", tasksRouter);
+    this.app.use("/api/doctor", doctorRouter);
+    this.app.use("/api/backup", backupRouter);
+    this.app.use("/api/reset", resetRouter);
+    this.app.use("/api/security", securityRouter);
+    this.app.use("/api/status", statusRouter);
+    this.app.use("/api/alerts", alertsRouter);
+    this.app.use("/api/incidents", incidentsRouter);
+    this.app.use("/api/maintenance-windows", maintenanceWindowsRouter);
+    this.app.use("/api/escalations", escalationsRouter);
+    this.app.use("/api/system", systemRouter);
 
     this.app.use((req, res) => {
       res.status(404).json({
@@ -157,6 +253,10 @@ export class GatewayServer {
       try {
         this.server = this.app.listen(this.port, () => {
           this.setupWebSocket();
+          startSchedulerEngine();
+          startHeartbeatEngine();
+          startTaskLedgerMaintenanceSweeper();
+          startTaskFlowMaintenanceSweeper();
           resolve();
         });
 
@@ -171,6 +271,11 @@ export class GatewayServer {
 
   public stop(): Promise<void> {
     return new Promise((resolve, reject) => {
+      stopSchedulerEngine();
+      stopHeartbeatEngine();
+      stopTaskLedgerMaintenanceSweeper();
+      stopTaskFlowMaintenanceSweeper();
+
       if (this.wss) {
         this.wss.close();
       }

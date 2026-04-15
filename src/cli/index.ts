@@ -41,6 +41,35 @@ import { runSetFallback } from "./commands/config/set-fallback.js";
 import { runGateway } from "./commands/gateway.js";
 import { runHistory } from "./commands/history.js";
 import { runBatch } from "./commands/batch.js";
+import { runProfileCommand } from "./commands/profiles.js";
+import { runCache } from "./commands/cache.js";
+import { runCosts } from "./commands/costs.js";
+import { runReplay } from "./commands/replay.js";
+import { runChat } from "./commands/chat.js";
+import { runPricing } from "./commands/pricing.js";
+import { runCapabilities } from "./commands/capabilities.js";
+import { runIntegrations } from "./commands/integrations.js";
+import { runRouter } from "./commands/router.js";
+import { runGuardrails } from "./commands/guardrails.js";
+import { runEval } from "./commands/eval.js";
+import { runBudget } from "./commands/budget.js";
+import { runAutomations } from "./commands/automations.js";
+import { runHooks } from "./commands/hooks.js";
+import { runScheduler } from "./commands/scheduler.js";
+import { runSelfTest } from "./commands/self-test.js";
+import { runStandingOrders } from "./commands/standing-orders.js";
+import { runTaskFlowCommand } from "./commands/task-flow.js";
+import { runHeartbeat } from "./commands/heartbeat.js";
+import { runTasks } from "./commands/tasks.js";
+import { runDoctorCommand } from "./commands/doctor.js";
+import { runBackupCommand } from "./commands/backup.js";
+import { runResetCommand } from "./commands/reset.js";
+import { runSecurityCommand } from "./commands/security.js";
+import { runStatusCommand } from "./commands/status.js";
+import { runAlertsCommand } from "./commands/alerts.js";
+import { runIncidentsCommand } from "./commands/incidents.js";
+import { runMaintenanceWindowsCommand } from "./commands/maintenance-windows.js";
+import { runEscalationsCommand } from "./commands/escalations.js";
 
 const args = process.argv.slice(2);
 
@@ -422,6 +451,10 @@ async function handleBatchCommand(commandArgs: string[]): Promise<void> {
   await runBatch(filePath, concurrency);
 }
 
+async function handleChatCommand(commandArgs: string[]): Promise<void> {
+  await runChat(commandArgs);
+}
+
 async function main(): Promise<void> {
   if (args.length === 1 && args[0] === "__internal_bot_start") {
     await startDiscordBotFromConfig();
@@ -466,6 +499,151 @@ async function main(): Promise<void> {
 
   if (args[0] === "batch") {
     await handleBatchCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "profile") {
+    await runProfileCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "cache") {
+    runCache(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "costs") {
+    runCosts(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "replay") {
+    runReplay(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "chat") {
+    await handleChatCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "pricing") {
+    runPricing(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "capabilities") {
+    runCapabilities(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "integrations") {
+    await runIntegrations(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "router") {
+    runRouter(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "guardrails") {
+    runGuardrails(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "eval") {
+    runEval(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "budget") {
+    runBudget(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "automations") {
+    await runAutomations(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "hooks") {
+    await runHooks(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "heartbeat") {
+    await runHeartbeat(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "standing-orders") {
+    runStandingOrders(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "scheduler") {
+    await runScheduler(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "task-flow") {
+    await runTaskFlowCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "tasks") {
+    runTasks(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "doctor") {
+    runDoctorCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "backup") {
+    runBackupCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "reset") {
+    runResetCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "security") {
+    runSecurityCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "status") {
+    runStatusCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "alerts") {
+    runAlertsCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "incidents") {
+    runIncidentsCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "maintenance-windows") {
+    runMaintenanceWindowsCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "escalations") {
+    await runEscalationsCommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "self-test") {
+    runSelfTest();
     return;
   }
 

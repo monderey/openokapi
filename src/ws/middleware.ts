@@ -19,6 +19,28 @@ type RateLimitState = {
 const rateLimitStore = new Map<string, RateLimitState>();
 let lastRateLimitCleanup = 0;
 
+function isTrustProxyEnabled(): boolean {
+  const raw = (process.env.OPENOKAPI_TRUST_PROXY || "").trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+function normalizeIdentifier(value: string | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const withoutIpv6Prefix = trimmed.startsWith("::ffff:")
+    ? trimmed.slice(7)
+    : trimmed;
+
+  return withoutIpv6Prefix;
+}
+
 export function getHeaderValue(
   value: string | string[] | undefined,
 ): string | undefined {
@@ -112,10 +134,18 @@ export function validateGatewayRateLimit(
   const now = Date.now();
   const minuteMs = 60_000;
 
-  const xForwardedFor = getHeaderValue(req.headers["x-forwarded-for"]);
-  const forwardedIp = xForwardedFor?.split(",")[0]?.trim();
-  const identifier =
-    forwardedIp || req.ip || req.socket.remoteAddress || "unknown-client";
+  let identifier =
+    normalizeIdentifier(req.ip) ||
+    normalizeIdentifier(req.socket.remoteAddress) ||
+    "unknown-client";
+
+  if (isTrustProxyEnabled()) {
+    const xForwardedFor = getHeaderValue(req.headers["x-forwarded-for"]);
+    const forwardedIp = normalizeIdentifier(xForwardedFor?.split(",")[0]);
+    if (forwardedIp) {
+      identifier = forwardedIp;
+    }
+  }
 
   const existing = rateLimitStore.get(identifier);
   if (!existing || now - existing.windowStart >= minuteMs) {

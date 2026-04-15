@@ -886,15 +886,15 @@ const OPENAI_FALLBACK_MODELS = ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-3.
 const CLAUDE_FALLBACK_MODELS = ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'];
 
 function getApiKey() {
-  return localStorage.getItem(KEY) || '';
+  return sessionStorage.getItem(KEY) || '';
 }
 
 function setApiKey(value) {
   if (!value) {
-    localStorage.removeItem(KEY);
+    sessionStorage.removeItem(KEY);
     return;
   }
-  localStorage.setItem(KEY, value);
+  sessionStorage.setItem(KEY, value);
 }
 
 function authHeaders(candidateKey) {
@@ -1588,11 +1588,15 @@ boot();`;
 
 router.get("/", (req: Request, res: Response) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
   res.send(panelHtml);
 });
 
 router.get("/app.js", (req: Request, res: Response) => {
   res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
   res.send(panelJs);
 });
 

@@ -97,6 +97,12 @@ export class GatewayServer {
       res.setHeader("X-Frame-Options", "DENY");
       res.setHeader("Referrer-Policy", "no-referrer");
       res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+      );
+      res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+      res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+      res.setHeader(
         "Permissions-Policy",
         "geolocation=(), microphone=(), camera=()",
       );
@@ -163,12 +169,54 @@ export class GatewayServer {
   private setupWebSocket(): void {
     if (!this.server) return;
 
-    this.wss = new WebSocketServer({ server: this.server });
+    this.wss = new WebSocketServer({
+      server: this.server,
+      maxPayload: 16_384,
+    });
+
+    const isOriginAllowed = (originValue: string | undefined): boolean => {
+      if (!originValue) {
+        return true;
+      }
+
+      let origin: URL;
+      try {
+        origin = new URL(originValue);
+      } catch {
+        return false;
+      }
+
+      const configured = (process.env.OPENOKAPI_ALLOWED_ORIGINS || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      if (configured.length > 0) {
+        return configured.includes(origin.origin);
+      }
+
+      return (
+        origin.hostname === "localhost" ||
+        origin.hostname === "127.0.0.1" ||
+        origin.hostname === "::1"
+      );
+    };
 
     this.wss.on("connection", (ws: WebSocket, req) => {
       const authConfig = getGatewayAuthConfig();
       const userAgent = getHeaderValue(req.headers["user-agent"]);
       const apiKey = getHeaderValue(req.headers["x-api-key"]);
+      const origin = getHeaderValue(req.headers.origin);
+
+      if (!isOriginAllowed(origin)) {
+        ws.send(
+          JSON.stringify({
+            error: "Invalid Origin.",
+          }),
+        );
+        ws.close(1008, "Invalid Origin");
+        return;
+      }
 
       if (!authConfig.apiKey) {
         ws.send(

@@ -11,17 +11,21 @@ router.get("/", (req: Request, res: Response) => {
       ? Number.parseInt(req.query.retentionDays, 10)
       : undefined;
 
-  const report = runDoctor({ repair, retentionDays });
+  const report = runDoctor({ repair, retentionDays } as any);
   res.status(report.ok ? 200 : 500).json({ report });
 });
 
 router.post("/repair", (req: Request, res: Response) => {
   const body = req.body as { retentionDays?: number };
-  const report = runDoctor({
-    repair: true,
-    retentionDays:
-      typeof body?.retentionDays === "number" ? body.retentionDays : undefined,
-  });
+  const report = runDoctor(
+    {
+      repair: true,
+      retentionDays:
+        typeof body?.retentionDays === "number"
+          ? body.retentionDays
+          : undefined,
+    } as any,
+  );
 
   res.status(report.ok ? 200 : 500).json({ report });
 });

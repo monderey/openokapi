@@ -31,10 +31,12 @@ export function runIncidentsCommand(commandArgs: string[]): void {
       : "list";
 
   if (sub === "create") {
+    const titleValue = getFlagValue(commandArgs, "--title");
+    const limitValue = Number(getFlagValue(commandArgs, "--limit") || "");
     const incident = createIncident({
-      title: getFlagValue(commandArgs, "--title"),
+      ...(titleValue && { title: titleValue }),
       deep: commandArgs.includes("--deep"),
-      alertLimit: Number(getFlagValue(commandArgs, "--limit") || ""),
+      ...(Number.isFinite(limitValue) && { alertLimit: limitValue }),
       forceWhenMuted: commandArgs.includes("--force"),
     });
 
@@ -157,7 +159,10 @@ export function runIncidentsCommand(commandArgs: string[]): void {
     ? Math.max(1, Math.floor(limitRaw))
     : 50;
   const status = parseStatus(getFlagValue(commandArgs, "--status"));
-  const incidents = listIncidents({ limit, status });
+  const incidents = listIncidents({
+    limit,
+    ...(status && { status }),
+  });
 
   if (json) {
     console.log(JSON.stringify({ incidents }, null, 2));

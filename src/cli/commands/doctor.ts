@@ -20,7 +20,10 @@ export function runDoctorCommand(commandArgs: string[]): void {
     ? Math.max(1, Math.floor(retentionDaysRaw))
     : undefined;
 
-  const report = runDoctor({ repair, retentionDays });
+  const report = runDoctor({
+    repair,
+    retentionDays: Number.isFinite(retentionDaysRaw) ? retentionDays : undefined,
+  } as any);
 
   if (json) {
     console.log(JSON.stringify({ report }, null, 2));

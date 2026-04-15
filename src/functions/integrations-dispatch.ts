@@ -243,6 +243,10 @@ async function dispatchToIntegration(input: {
   let lastError: string | undefined;
 
   for (let attempt = 1; attempt <= attemptsMax; attempt += 1) {
+    if (!endpoint) {
+      throw new Error("Integration endpoint is required");
+    }
+
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const signature = integration.secret
       ? createHmac("sha256", integration.secret)

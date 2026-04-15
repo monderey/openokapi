@@ -25,17 +25,24 @@ export function runMaintenanceWindowsCommand(commandArgs: string[]): void {
   const json = commandArgs.includes("--json");
 
   if (commandArgs.includes("--set")) {
-    const window = upsertMaintenanceWindow({
-      id: getFlagValue(commandArgs, "--id"),
-      name: getFlagValue(commandArgs, "--name") || "",
-      enabled: parseBooleanFlag(getFlagValue(commandArgs, "--enabled")),
-      startAt: getFlagValue(commandArgs, "--start-at") || "",
-      endAt: getFlagValue(commandArgs, "--end-at") || "",
-      muteAlerts: parseBooleanFlag(getFlagValue(commandArgs, "--mute-alerts")),
-      muteIncidents: parseBooleanFlag(
-        getFlagValue(commandArgs, "--mute-incidents"),
-      ),
-    });
+      const idValue = getFlagValue(commandArgs, "--id");
+      const window = upsertMaintenanceWindow({
+        ...(idValue && { id: idValue }),
+        name: getFlagValue(commandArgs, "--name") || "",
+        ...(parseBooleanFlag(getFlagValue(commandArgs, "--enabled")) !== undefined && {
+          enabled: parseBooleanFlag(getFlagValue(commandArgs, "--enabled")),
+        }),
+        startAt: getFlagValue(commandArgs, "--start-at") || "",
+        endAt: getFlagValue(commandArgs, "--end-at") || "",
+        ...(parseBooleanFlag(getFlagValue(commandArgs, "--mute-alerts")) !== undefined && {
+          muteAlerts: parseBooleanFlag(getFlagValue(commandArgs, "--mute-alerts")),
+        }),
+        ...(parseBooleanFlag(getFlagValue(commandArgs, "--mute-incidents")) !== undefined && {
+          muteIncidents: parseBooleanFlag(
+            getFlagValue(commandArgs, "--mute-incidents"),
+          ),
+        }),
+      } as any);
 
     if (json) {
       console.log(JSON.stringify({ window }, null, 2));

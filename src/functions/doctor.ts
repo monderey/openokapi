@@ -114,13 +114,13 @@ export function runDoctor(options?: {
       : undefined;
 
     report.repair = {
-      tasks: runTaskLedgerMaintenance({
-        apply: true,
-        retentionDays,
+        tasks: runTaskLedgerMaintenance({
+          apply: true,
+          ...(typeof retentionDays === "number" && { retentionDays }),
       }),
       taskFlow: runTaskFlowMaintenance({
-        apply: true,
-        retentionDays,
+          apply: true,
+          ...(typeof retentionDays === "number" && { retentionDays }),
       }),
     };
   }

@@ -129,19 +129,36 @@ export function getHeartbeatEngineStatus(): {
   intervalMinutes: number;
   provider: "openai" | "claude" | "ollama";
   lastRunAt?: string;
-  lastStatus?: "success" | "failed";
+  lastStatus?: string;
   lastError?: string;
 } {
   const config = loadHeartbeatConfig();
-  return {
+  const status: {
+    started: boolean;
+    enabled: boolean;
+    intervalMinutes: number;
+    provider: "openai" | "claude" | "ollama";
+    lastRunAt?: string;
+    lastStatus?: string;
+    lastError?: string;
+  } = {
     started: heartbeatStarted,
     enabled: config.enabled,
     intervalMinutes: config.intervalMinutes,
     provider: config.provider,
-    lastRunAt: config.lastRunAt,
-    lastStatus: config.lastStatus,
-    lastError: config.lastError,
   };
+
+  if (config.lastRunAt) {
+    status.lastRunAt = config.lastRunAt;
+  }
+  if (config.lastStatus) {
+    status.lastStatus = config.lastStatus;
+  }
+  if (config.lastError) {
+    status.lastError = config.lastError;
+  }
+
+  return status;
 }
 
 export function updateAndReloadHeartbeat(input: {

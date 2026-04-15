@@ -24,7 +24,7 @@ router.get("/", (req: Request, res: Response) => {
       ? Number.parseInt(req.query.limit, 10)
       : undefined;
 
-  res.json({ incidents: listIncidents({ status, limit }) });
+  res.json({ incidents: listIncidents({ status, limit } as any) });
 });
 
 router.post("/", (req: Request, res: Response) => {
@@ -48,7 +48,10 @@ router.post("/", (req: Request, res: Response) => {
 });
 
 router.get("/:id", (req: Request, res: Response) => {
-  const incident = getIncident(req.params.id || "");
+  const incidentId = Array.isArray(req.params.id)
+    ? req.params.id[0] || ""
+    : req.params.id || "";
+  const incident = getIncident(incidentId);
   if (!incident) {
     res.status(404).json({ error: "Incident not found" });
     return;
@@ -58,8 +61,11 @@ router.get("/:id", (req: Request, res: Response) => {
 });
 
 router.post("/:id/ack", (req: Request, res: Response) => {
+  const incidentId = Array.isArray(req.params.id)
+    ? req.params.id[0] || ""
+    : req.params.id || "";
   const incident = acknowledgeIncident(
-    req.params.id || "",
+    incidentId,
     typeof req.body?.note === "string" ? req.body.note : undefined,
   );
   if (!incident) {
@@ -71,8 +77,11 @@ router.post("/:id/ack", (req: Request, res: Response) => {
 });
 
 router.post("/:id/resolve", (req: Request, res: Response) => {
+  const incidentId = Array.isArray(req.params.id)
+    ? req.params.id[0] || ""
+    : req.params.id || "";
   const incident = resolveIncident(
-    req.params.id || "",
+    incidentId,
     typeof req.body?.note === "string" ? req.body.note : undefined,
   );
   if (!incident) {

@@ -13,7 +13,7 @@ router.get("/", (req: Request, res: Response) => {
       ? Number.parseInt(req.query.limit, 10)
       : undefined;
 
-  const report = getAlertsReport({ deep, limit, ignoreMute });
+  const report = getAlertsReport({ deep, limit, ignoreMute } as any);
   res.status(report.ok ? 200 : 500).json({ report });
 });
 

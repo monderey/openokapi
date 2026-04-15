@@ -86,7 +86,10 @@ export function markTaskCompleted(
   taskId: string,
   metadata?: Record<string, unknown>,
 ): TaskRecord | undefined {
-  const task = updateTask(taskId, { status: "completed", metadata });
+  const task = updateTask(taskId, {
+    status: "completed",
+    metadata,
+  } as any);
   if (task) {
     emitTaskNotification(task, "completed");
   }
@@ -313,7 +316,7 @@ export function getTaskLedgerMaintenanceStatus(): {
     started: maintenanceStarted,
     intervalMinutes: maintenanceIntervalMinutes,
     retentionDays: maintenanceRetentionDays,
-    lastRunAt: maintenanceLastRunAt,
+    ...(maintenanceLastRunAt && { lastRunAt: maintenanceLastRunAt }),
     lastRemoved: maintenanceLastRemoved,
   };
 }

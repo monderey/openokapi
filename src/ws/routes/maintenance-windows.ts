@@ -44,7 +44,10 @@ router.post("/", (req: Request, res: Response) => {
 });
 
 router.delete("/:id", (req: Request, res: Response) => {
-  const deleted = deleteMaintenanceWindow(req.params.id || "");
+  const id = Array.isArray(req.params.id)
+    ? req.params.id[0] || ""
+    : req.params.id || "";
+  const deleted = deleteMaintenanceWindow(id);
   if (!deleted) {
     res.status(404).json({ error: "Maintenance window not found" });
     return;

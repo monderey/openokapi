@@ -78,7 +78,7 @@ export function getAlertsReport(options?: {
         code: `${finding.domain}.${finding.code}`,
         severity: finding.severity,
         message: finding.message,
-        ref: finding.ref,
+              ...(finding.ref && { ref: finding.ref }),
       });
     }
   }
@@ -90,7 +90,7 @@ export function getAlertsReport(options?: {
         code: finding.code,
         severity: finding.severity,
         message: finding.message,
-        ref: finding.ref,
+              ...(finding.ref && { ref: finding.ref }),
       });
     }
   }

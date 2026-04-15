@@ -123,10 +123,10 @@ export async function runEscalationRules(input?: {
         incidentId = incident.id;
       }
 
-      markEscalationRun({
+          markEscalationRun({
         id: rule.id,
         status: "triggered",
-        incidentId,
+            ...(incidentId && { incidentId }),
       });
 
       results.push({
@@ -134,7 +134,7 @@ export async function runEscalationRules(input?: {
         ruleName: rule.name,
         matched: true,
         triggered: true,
-        incidentId,
+           ...(incidentId && { incidentId }),
         deliveries: deliveries.length,
         failedDeliveries,
       });

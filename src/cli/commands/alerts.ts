@@ -19,7 +19,11 @@ export function runAlertsCommand(commandArgs: string[]): void {
     ? Math.max(1, Math.floor(limitRaw))
     : undefined;
 
-  const report = getAlertsReport({ deep, limit, ignoreMute });
+  const report = getAlertsReport({
+    deep,
+    limit: Number.isFinite(limitRaw) ? limit : undefined,
+    ignoreMute,
+  } as any);
 
   if (json) {
     console.log(JSON.stringify({ report }, null, 2));

@@ -72,7 +72,7 @@ export function createIncident(options?: {
 
   const alertsReport = getAlertsReport({
     deep: false,
-    limit: options?.alertLimit,
+     ...(typeof options?.alertLimit === "number" && { limit: options.alertLimit }),
     ignoreMute: true,
   });
   const statusReport = getStatusReport({ deep: options?.deep === true });

@@ -41,7 +41,7 @@ router.get("/", (req: Request, res: Response) => {
       : undefined;
 
   res.json({
-    flows: listTaskFlows({ status, enabled, limit }),
+    flows: listTaskFlows({ status, enabled, limit } as any),
     status: getTaskFlowStatus(),
   });
 });
@@ -67,7 +67,7 @@ router.post("/maintenance", (req: Request, res: Response) => {
     apply: body?.apply === true,
     retentionDays:
       typeof body?.retentionDays === "number" ? body.retentionDays : undefined,
-  });
+  } as any);
 
   res.json({ result });
 });

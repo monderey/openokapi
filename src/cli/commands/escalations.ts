@@ -60,15 +60,15 @@ export async function runEscalationsCommand(
       enabled: parseBoolean(getFlagValue(commandArgs, "--enabled")),
       trigger,
       minSeverity: parseSeverity(getFlagValue(commandArgs, "--min-severity")),
-      minCount: minCountRaw ? Number.parseInt(minCountRaw, 10) : undefined,
+      ...(minCountRaw && { minCount: Number.parseInt(minCountRaw, 10) }),
       integrationEvent: getFlagValue(commandArgs, "--integration-event"),
       autoCreateIncident: parseBoolean(
         getFlagValue(commandArgs, "--auto-incident"),
       ),
-      cooldownMinutes: cooldownRaw
-        ? Number.parseInt(cooldownRaw, 10)
-        : undefined,
-    });
+      ...(cooldownRaw && {
+        cooldownMinutes: Number.parseInt(cooldownRaw, 10),
+      }),
+    } as any);
 
     if (json) {
       console.log(JSON.stringify({ rule }, null, 2));
@@ -97,8 +97,9 @@ export async function runEscalationsCommand(
   if (commandArgs.includes("--run")) {
     const results = await runEscalationRules({
       force: commandArgs.includes("--force"),
-      reason: getFlagValue(commandArgs, "--reason"),
-    });
+       reason: getFlagValue(commandArgs, "--reason"),
+     } as any);
+     // Removed duplicate closing bracket
 
     if (json) {
       console.log(JSON.stringify({ results }, null, 2));

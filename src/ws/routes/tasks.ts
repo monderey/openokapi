@@ -54,12 +54,14 @@ router.get("/", (req: Request, res: Response) => {
 
   const json = req.query.json === "1" || req.query.json === "true";
 
-  const tasks = listBackgroundTasks({
-    limit,
-    status,
-    kind,
-    notifyPolicy,
-  });
+  const tasks = listBackgroundTasks(
+    {
+      limit,
+      status,
+      kind,
+      notifyPolicy,
+    } as any,
+  );
 
   if (json) {
     res.json({
@@ -99,11 +101,15 @@ router.post("/maintenance", (req: Request, res: Response) => {
     retentionDays?: number;
   };
 
-  const result = runTaskLedgerMaintenance({
-    apply: body?.apply === true,
-    retentionDays:
-      typeof body?.retentionDays === "number" ? body.retentionDays : undefined,
-  });
+  const result = runTaskLedgerMaintenance(
+    {
+      apply: body?.apply === true,
+      retentionDays:
+        typeof body?.retentionDays === "number"
+          ? body.retentionDays
+          : undefined,
+    } as any,
+  );
 
   res.json({ result });
 });
@@ -122,6 +128,11 @@ router.get("/flow", (req: Request, res: Response) => {
       ? req.query.status
       : undefined;
 
+  const limit =
+    typeof req.query.limit === "string"
+      ? Number.parseInt(req.query.limit, 10)
+      : undefined;
+
   const enabled =
     req.query.enabled === "true"
       ? true
@@ -129,13 +140,8 @@ router.get("/flow", (req: Request, res: Response) => {
         ? false
         : undefined;
 
-  const limit =
-    typeof req.query.limit === "string"
-      ? Number.parseInt(req.query.limit, 10)
-      : undefined;
-
   res.json({
-    flows: listTaskFlows({ status, enabled, limit }),
+    flows: listTaskFlows({ status, enabled, limit } as any),
     status: getTaskFlowStatus(),
   });
 });
@@ -157,11 +163,15 @@ router.post("/flow/maintenance", (req: Request, res: Response) => {
     apply?: boolean;
     retentionDays?: number;
   };
-  const result = runTaskFlowMaintenance({
-    apply: body?.apply === true,
-    retentionDays:
-      typeof body?.retentionDays === "number" ? body.retentionDays : undefined,
-  });
+  const result = runTaskFlowMaintenance(
+    {
+      apply: body?.apply === true,
+      retentionDays:
+        typeof body?.retentionDays === "number"
+          ? body.retentionDays
+          : undefined,
+    } as any,
+  );
 
   res.json({ result });
 });

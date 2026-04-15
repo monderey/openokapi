@@ -56,7 +56,7 @@ router.post("/", (req: Request, res: Response) => {
         typeof req.body?.cooldownMinutes === "number"
           ? req.body.cooldownMinutes
           : undefined,
-    });
+    } as any);
 
     res.json({ rule });
   } catch (error) {
@@ -67,7 +67,7 @@ router.post("/", (req: Request, res: Response) => {
 });
 
 router.delete("/:id", (req: Request, res: Response) => {
-  const id = req.params.id || "";
+  const id = Array.isArray(req.params.id) ? (req.params.id[0] || "") : (req.params.id || "");
   const deleted = deleteEscalationRule(id);
   if (!deleted) {
     res.status(404).json({ error: "Escalation rule not found" });

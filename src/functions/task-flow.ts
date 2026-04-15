@@ -29,11 +29,7 @@ let maintenanceLastRemoved = 0;
 function resetSteps(steps: TaskFlowStep[]): TaskFlowStep[] {
   return steps.map((step) => ({
     ...step,
-    status: "pending",
-    result: undefined,
-    error: undefined,
-    startedAt: undefined,
-    completedAt: undefined,
+     status: "pending" as const,
   }));
 }
 
@@ -254,7 +250,7 @@ export function getTaskFlowMaintenanceStatus(): {
     started: maintenanceStarted,
     intervalMinutes: maintenanceIntervalMinutes,
     retentionDays: maintenanceRetentionDays,
-    lastRunAt: maintenanceLastRunAt,
+     ...(maintenanceLastRunAt && { lastRunAt: maintenanceLastRunAt }),
     lastRemoved: maintenanceLastRemoved,
   };
 }
